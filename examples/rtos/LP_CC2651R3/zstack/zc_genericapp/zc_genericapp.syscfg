@@ -1,0 +1,143 @@
+/**
+ * These arguments were used when this file was generated. They will be automatically applied on subsequent loads
+ * via the GUI or CLI. Run CLI with '--help' for additional information on how to override these arguments.
+ * @cliArgs --device "CC2651R3RGZ" --package "RGZ" --part "Default" --rtos "tirtos" --product "simplelink_cc13xx_cc26xx_sdk@5.40.00.40"
+ * @versions {"tool":"1.10.0+2163"}
+ */
+
+/**
+ * Import the modules used in this configuration.
+ */
+const CCFG     = scripting.addModule("/ti/devices/CCFG");
+const rfdesign = scripting.addModule("/ti/devices/radioconfig/rfdesign");
+const Display  = scripting.addModule("/ti/display/Display");
+const Display1 = Display.addInstance();
+const AESCBC   = scripting.addModule("/ti/drivers/AESCBC");
+const AESCBC1  = AESCBC.addInstance();
+const AESCCM   = scripting.addModule("/ti/drivers/AESCCM");
+const AESCCM1  = AESCCM.addInstance();
+const AESECB   = scripting.addModule("/ti/drivers/AESECB");
+const AESECB1  = AESECB.addInstance();
+const DMA      = scripting.addModule("/ti/drivers/DMA");
+const ECDH     = scripting.addModule("/ti/drivers/ECDH");
+const ECDH1    = ECDH.addInstance();
+const ECDSA    = scripting.addModule("/ti/drivers/ECDSA");
+const ECDSA1   = ECDSA.addInstance();
+const NVS      = scripting.addModule("/ti/drivers/NVS");
+const NVS1     = NVS.addInstance();
+const NVS2     = NVS.addInstance();
+const Power    = scripting.addModule("/ti/drivers/Power");
+const RF       = scripting.addModule("/ti/drivers/RF");
+const SHA2     = scripting.addModule("/ti/drivers/SHA2");
+const SHA21    = SHA2.addInstance();
+const TRNG     = scripting.addModule("/ti/drivers/TRNG");
+const TRNG1    = TRNG.addInstance();
+const Button   = scripting.addModule("/ti/drivers/apps/Button");
+const Button1  = Button.addInstance();
+const Button2  = Button.addInstance();
+const LED      = scripting.addModule("/ti/drivers/apps/LED");
+const LED1     = LED.addInstance();
+const LED2     = LED.addInstance();
+const zstack   = scripting.addModule("/ti/zstack/zstack");
+
+/**
+ * Write custom configuration values to the imported modules.
+ */
+CCFG.enableBootloader         = true;
+CCFG.enableBootloaderBackdoor = true;
+CCFG.dioBootloaderBackdoor    = 13;
+CCFG.levelBootloaderBackdoor  = "Active low";
+CCFG.ccfgTemplate.$name       = "ti_devices_CCFGTemplate0";
+
+Display1.$name                   = "CONFIG_DISPLAY";
+Display1.uart.$name              = "CONFIG_DISPLAY_UART";
+Display1.uart.uart.$assign       = "UART0";
+Display1.uart.uart.txPin.$assign = "ball.19";
+Display1.uart.uart.rxPin.$assign = "ball.18";
+
+AESCBC1.$name = "CONFIG_AESCBC_0";
+
+AESCCM1.$name             = "CONFIG_AESCCM_0";
+AESCCM1.interruptPriority = "2";
+
+AESECB1.$name             = "CONFIG_AESECB_0";
+AESECB1.interruptPriority = "1";
+
+ECDH1.$name = "CONFIG_ECDH_0";
+
+ECDSA1.$name = "CONFIG_ECDSA_0";
+
+NVS1.$name                    = "CONFIG_NVSINTERNAL";
+NVS1.internalFlash.$name      = "ti_drivers_nvs_NVSCC26XX0";
+NVS1.internalFlash.regionSize = 0x4000;
+NVS1.internalFlash.regionBase = 0x52000;
+
+NVS2.$name                          = "CONFIG_NVSEXTERNAL";
+NVS2.nvsType                        = "External";
+NVS2.externalFlash.$name            = "ti_drivers_nvs_NVSSPI25X0";
+NVS2.externalFlash.regionSize       = 0x256000;
+NVS2.externalFlash.verifyBufferSize = 64;
+
+RF.pinSelectionAntenna                      = 2;
+RF.rfAntennaPinSymbol0                      = "CONFIG_RF_24GHZ";
+RF.rfAntennaPinSymbol1                      = "CONFIG_RF_HIGH_PA";
+RF.rfAntennaPin0.$assign                    = "ball.41";
+RF.rfAntennaPin1.$assign                    = "ball.42";
+RF.rfAntennaPin0Instance.initialOutputState = scripting.forceWrite("Low");
+RF.rfAntennaPin1Instance.initialOutputState = scripting.forceWrite("Low");
+
+SHA21.$name = "CONFIG_SHA2_0";
+
+TRNG1.$name = "CONFIG_TRNG_0";
+
+Button1.$name          = "CONFIG_BTN_LEFT";
+Button1.button.$assign = "ball.21";
+Button1.gpioPin.$name  = "CONFIG_GPIO_BTN1";
+Button1.gpioPin.pull   = "Pull Up";
+
+Button2.$name          = "CONFIG_BTN_RIGHT";
+Button2.button.$assign = "ball.20";
+Button2.gpioPin.$name  = "CONFIG_GPIO_BTN2";
+Button2.gpioPin.pull   = "Pull Up";
+
+LED1.$name          = "CONFIG_LED_RED";
+LED1.ledPin.$assign = "ball.11";
+LED1.gpioPin.$name  = "CONFIG_GPIO_RLED";
+
+LED2.$name          = "CONFIG_LED_GREEN";
+LED2.ledPin.$assign = "ball.12";
+LED2.gpioPin.$name  = "CONFIG_GPIO_GLED";
+
+const NVSSPI25XDevice                         = scripting.addModule("/ti/drivers/nvs/NVSSPI25XDevice", {}, false);
+const NVSSPI25XDevice1                        = NVSSPI25XDevice.addInstance({}, false);
+NVSSPI25XDevice1.$name                        = "CONFIG_NVS_SPI_0";
+NVS2.externalFlash.spiFlashDevice             = NVSSPI25XDevice1;
+NVSSPI25XDevice1.slaveSelect.$assign          = "ball.30";
+NVSSPI25XDevice1.slaveSelectPinInstance.$name = "CONFIG_GPIO_0";
+
+const SPI                          = scripting.addModule("/ti/drivers/SPI", {}, false);
+const SPI1                         = SPI.addInstance({}, false);
+SPI1.$name                         = "CONFIG_SPI_0";
+NVSSPI25XDevice1.sharedSpiInstance = SPI1;
+SPI1.spi.$assign                   = "SSI0";
+SPI1.spi.sclkPin.$assign           = "ball.16";
+SPI1.spi.misoPin.$assign           = "ball.14";
+SPI1.spi.mosiPin.$assign           = "ball.15";
+SPI1.spi.dmaRxChannel.$assign      = "DMA_CH3";
+SPI1.spi.dmaTxChannel.$assign      = "DMA_CH4";
+SPI1.sclkPinInstance.$name         = "CONFIG_PIN_SPI_SCLK";
+SPI1.misoPinInstance.$name         = "CONFIG_PIN_SPI_MISO";
+SPI1.mosiPinInstance.$name         = "CONFIG_PIN_SPI_MOSI";
+
+zstack.deviceTypeReadOnly                    = true;
+zstack.touchlink.$name                       = "ti_zstack_touchlink_zstack_touchlink0";
+zstack.pm.$name                              = "ti_zstack_pm_zstack_pm0";
+zstack.rf.$name                              = "ti_zstack_rf_zstack_rf0";
+zstack.rf.radioConfig.$name                  = "ti_devices_radioconfig_settings_ieee_15_40";
+zstack.rf.radioConfig.codeExportConfig.$name = "ti_devices_radioconfig_code_export_param0";
+zstack.rf.coexSettings.$name                 = "ti_zstack_rf_zstack_coex_mod0";
+zstack.network.$name                         = "ti_zstack_network_zstack_network0";
+zstack.advanced.$name                        = "ti_zstack_advanced_zstack_advanced0";
+zstack.advanced.routing.$name                = "ti_zstack_advanced_zstack_routing0";
+zstack.advanced.packetSending.$name          = "ti_zstack_advanced_zstack_packet_sending0";
+zstack.advanced.tableSize.$name              = "ti_zstack_advanced_zstack_table_size0";
