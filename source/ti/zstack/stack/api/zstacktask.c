@@ -3112,6 +3112,7 @@ static void sendTcDeviceInd( uint16_t dstID, uint16_t srcAddr, void *pMsg )
   OsalPort_memcpy( &pDevInd->req.extendedAddr, pDev->extAddr, Z_EXTADDR_LEN );
   pDevInd->req.parentAddr = pDev->parentAddr;
   pDevInd->req.secure = pDev->secure; //add by luoyiming,2019-08-01
+  pDevInd->req.devStatus = pDev->devStatus; //add by luoyiming,2022-03-03
 
   // Send to a subscriber
   OsalPort_msgSend( dstID, (uint8_t*)pDevInd );

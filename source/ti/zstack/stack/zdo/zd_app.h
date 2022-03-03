@@ -394,9 +394,10 @@ typedef struct
 typedef struct
 {
   uint16_t nwkAddr;
-  uint8_t extAddr[Z_EXTADDR_LEN];
+  uint8_t  extAddr[Z_EXTADDR_LEN];
   uint16_t parentAddr;
-  uint8_t secure; //add by luoyiming, 2019-08-01
+  uint8_t  secure; //add by luoyiming, 2019-08-01
+  uint8_t  devStatus; //add by luoyiming, 2022-03-03
 } ZDO_TC_Device_t;
 
 #if defined ( ZDP_BIND_VALIDATION )

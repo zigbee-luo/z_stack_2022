@@ -1248,7 +1248,8 @@ ZStatus_t ZDSecMgrDeviceJoin( ZDSecMgrDevice_t* device )
       dev.nwkAddr = device->nwkAddr;
       OsalPort_memcpy( dev.extAddr, device->extAddr, Z_EXTADDR_LEN );
       dev.parentAddr = device->parentAddr;
-      dev.secure = device->secure; //add secure join flag, fix by luoyiming,2019-08-01
+      dev.secure = device->secure; //add secure join flag, fix by luoyiming, 2019-08-01
+      dev.devStatus = device->devStatus; // add device status, fix by luoyiming, 2022-03-03
 
       zdoCBFunc[ZDO_TC_DEVICE_CBID]( (void*)&dev );
     }

@@ -2771,6 +2771,8 @@ typedef struct _zstack_zdotcteviceind_t
     zstack_LongAddr_t extendedAddr;
     /** The joining device's secure mode, add by luoyiming 2019-08-01 **/
     uint8_t secure;
+    /** The device status, add by luoyiming 2019-08-01 **/
+    uint8_t devStatus;
 } zstack_zdoTcDeviceInd_t;
 
 //*****************************************************************************
