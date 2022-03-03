@@ -94,7 +94,9 @@ extern "C" {
 
 // this value is built into the libraries, so it is not
 // configurable in the release projects
+#ifndef MAX_BINDING_CLUSTER_IDS
 #define MAX_BINDING_CLUSTER_IDS 4
+#endif
 
 /*********************************************************************
  * TYPEDEFS
