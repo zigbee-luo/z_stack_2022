@@ -2544,12 +2544,15 @@ zclProcMsgStatus_t zcl_ProcessMessageMSG( afIncomingMSGPacket_t *pkt )
   // Is this a foundation type message
   if ( !interPanMsg && zcl_ProfileCmd( inMsg.hdr.fc.type ) )
   {
-    if ( CMD_REQ_IND( inMsg.hdr.commandID ) &&
-         ( inMsg.hdr.fc.manuSpecific ) && // add by luoyiming 2019-5-19
-         ( !zcl_MatchClusterManuCode( inMsg.msg->clusterId, inMsg.hdr.manuCode )) ) // manu code match cluster fail, fix at 2019-10-20
+    bool reqCmd = CMD_REQ_IND( inMsg.hdr.commandID );
+    if ( reqCmd && inMsg.hdr.fc.manuSpecific && !zcl_MatchClusterManuCode(inMsg.msg->clusterId, inMsg.hdr.manuCode) )
     {
-      // We don't support any manufacturer specific command
+      // manu code match cluster fail, fix at 2019-10-20
       status = ZCL_STATUS_UNSUP_MANU_GENERAL_COMMAND;
+    }
+    else if ( reqCmd && !inMsg.hdr.fc.manuSpecific && (inMsg.msg->clusterId >= 0xFC00) )
+    {
+      status = ZCL_STATUS_UNSUP_GENERAL_COMMAND;
     }
     else if ( ( inMsg.hdr.commandID <= ZCL_CMD_MAX ) &&
               ( zclCmdTable[inMsg.hdr.commandID].pfnParseInProfile != NULL ) )
@@ -2888,6 +2891,11 @@ uint8_t zclFindCmdRecEx( uint8_t endpoint, uint16_t clusterID, uint16_t manuCode
       {
         continue;
       }
+      // luoyiming 2022-03-11
+      if ( !( pRec->pCmdRecs[i].flag & CMD_FLAG_MANUCODE ) && ( matchManuCode == TRUE ) )
+      {
+        continue;
+      }
       if( (flag != 0) && ( (pRec->pCmdRecs[i].flag & flag) == 0 ) ) // match direction flag, luoyiming 2021-06-23
       {
         continue;
@@ -2966,7 +2974,12 @@ uint8_t zclFindAttrRecEx( uint8_t endpoint, uint16_t clusterID, uint16_t manuCod
     for ( x = 0; x < pRec->numAttributes; x++ )
     {
       // match manufacturer attribute at first, luoyiming 2020-01-08
-      if ( ( pRec->attrs[x].attr.accessControl & ACCESS_MANU_ATTR ) && matchManuCode == FALSE )
+      if ( ( pRec->attrs[x].attr.accessControl & ACCESS_MANU_ATTR ) && ( matchManuCode == FALSE ) )
+      {
+        continue;
+      }
+      // luoyiming 2022-03-11
+      if ( !( pRec->attrs[x].attr.accessControl & ACCESS_MANU_ATTR ) && ( matchManuCode == TRUE ) )
       {
         continue;
       }
@@ -3192,7 +3205,12 @@ static uint8_t zclFindNextCmdRec( uint8_t endpoint, uint16_t clusterID, uint16_t
     for ( i = *startIdx; i < pRec->numCommands; i++ )
     {
       // match manufacturer command at first, luoyiming 2020-01-08
-      if ( ( pRec->pCmdRecs[i].flag & CMD_FLAG_MANUCODE ) && matchManuCode == FALSE )
+      if ( ( pRec->pCmdRecs[i].flag & CMD_FLAG_MANUCODE ) && ( matchManuCode == FALSE ) )
+      {
+        continue;
+      }
+      // match manufacturer command at first, luoyiming 2020-01-08
+      if ( !( pRec->pCmdRecs[i].flag & CMD_FLAG_MANUCODE ) && ( matchManuCode == TRUE ) )
       {
         continue;
       }
@@ -3297,7 +3315,12 @@ static uint8_t zclFindNextAttrRec( uint8_t endpoint, uint16_t clusterID, uint16_
     for ( x = *startIdx; x < pRec->numAttributes; x++ )
     {
       // match manufacturer attribute at first, luoyiming 2020-01-08
-      if ( ( pRec->attrs[x].attr.accessControl & ACCESS_MANU_ATTR ) && matchManuCode == FALSE )
+      if ( ( pRec->attrs[x].attr.accessControl & ACCESS_MANU_ATTR ) && ( matchManuCode == FALSE ) )
+      {
+        continue;
+      }
+      //  luoyiming 2022-03-11
+      if ( !( pRec->attrs[x].attr.accessControl & ACCESS_MANU_ATTR ) && ( matchManuCode == TRUE ) )
       {
         continue;
       }
