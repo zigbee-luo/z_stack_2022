@@ -1821,15 +1821,15 @@ static ZStatus_t zclGeneral_ProcessInIdentity( zclIncoming_t *pInMsg,
     }
 #endif //ZCL_LIGHT_LINK_ENHANCE
     else if ( pInMsg->hdr.commandID == COMMAND_IDENTIFY_IDENTIFY )
-        {
-          if(pCBs->pfnIdentify != NULL)
-          {
-            zclIdentify_t cmd;
-            cmd.srcAddr = &(pInMsg->msg->srcAddr);
-            cmd.identifyTime = BUILD_UINT16( pInMsg->pData[0], pInMsg->pData[1] );
-            pCBs->pfnIdentify( &cmd );
-          }
-        }
+    {
+      if(pCBs->pfnIdentify != NULL)
+      {
+        zclIdentify_t cmd;
+        cmd.srcAddr = &(pInMsg->msg->srcAddr);
+        cmd.identifyTime = BUILD_UINT16( pInMsg->pData[0], pInMsg->pData[1] );
+        pCBs->pfnIdentify( &cmd );
+      }
+    }
     else
     {
       return ( ZFailure );   // Error ignore the command

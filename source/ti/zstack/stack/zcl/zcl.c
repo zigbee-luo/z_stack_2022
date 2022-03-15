@@ -5068,9 +5068,9 @@ static uint8_t zclProcessInWriteCmd( zclIncoming_t *pInMsg )
         if ( attrRec.attr.dataPtr != NULL )
         {
           //Handle special case for Identify
+#if (BDB_FINDING_BINDING_CAPABILITY_ENABLED == 1)
           if((pInMsg->msg->clusterId == ZCL_CLUSTER_ID_GENERAL_IDENTIFY) && (statusRec->attrID == ATTRID_IDENTIFY_IDENTIFY_TIME))
           {
-#if (BDB_FINDING_BINDING_CAPABILITY_ENABLED == 1)
             uint16_t identifyTime;
 
             OsalPort_memcpy((uint8_t*)&identifyTime,statusRec->attrData,sizeof(uint16_t));
@@ -5082,9 +5082,9 @@ static uint8_t zclProcessInWriteCmd( zclIncoming_t *pInMsg )
             bdb_ZclIdentifyCmdInd(identifyTime, pInMsg->msg->endPoint);
 
             status = ZCL_STATUS_SUCCESS;
-#endif
           }
           else
+#endif
           {
             status = zclWriteAttrData( pInMsg->msg->endPoint, &(pInMsg->msg->srcAddr),
                                        &attrRec, statusRec );
