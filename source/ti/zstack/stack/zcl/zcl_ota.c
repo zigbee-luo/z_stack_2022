@@ -82,6 +82,15 @@
 #define ZCL_OTA_STK_VER_OFFSET      18 // Stack version location in OTA upgrade image
 #define ZCL_OTA_DL_CRC_OFFSET       62
 
+/******************************************************************************
+ * TYPEDEF
+ */
+typedef struct
+{
+  pfnAfCnfCB cnfCB;
+  void* cnfParam;
+  uint8_t optMsk;
+}zclOTA_SetSendConfirmParam_t;
 
 /******************************************************************************
  * GLOBAL VARIABLES
@@ -131,6 +140,8 @@ uint8_t oadPdState = 0;
 /******************************************************************************
  * LOCAL VARIABLES
  */
+
+zclOTA_SetSendConfirmParam_t *zclOTA_SetSendConfirmParam = NULL;
 
 // Sequence number
 #if (defined OTA_CLIENT_STANDALONE) || (defined OTA_CLIENT_INTEGRATED) || (defined OTA_SERVER)
@@ -237,6 +248,64 @@ void zclOTA_ProcessUnhandledFoundationZCLMsgs ( zclIncomingMsg_t *pMsg )
 }
 #endif
 
+/******************************************************************************
+ * @fn      zclOTA_SendCommand
+ *
+ * @brief   send command in ota service and trigger ota send confirm
+ *
+ * @param   same with zcl_SendCommand
+ *
+ * @return  ZStatus_t
+ */
+ZStatus_t zclOTA_SendCommand( uint8_t srcEP, afAddrType_t *dstAddr,
+                             uint16_t clusterID, uint8_t cmd, uint8_t specific, uint8_t direction,
+                             uint8_t disableDefaultRsp, uint16_t manuCode, uint8_t seqNum,
+                             uint16_t cmdFormatLen, uint8_t *cmdFormat )
+{
+  pfnAfCnfCB cnfCB = NULL;
+  void* cnfParam = NULL;
+  uint8_t optMsk = 0;
+
+  if ( zclOTA_SetSendConfirmParam )
+  {
+    cnfCB = zclOTA_SetSendConfirmParam->cnfCB;
+    cnfParam = zclOTA_SetSendConfirmParam->cnfParam;
+    optMsk = zclOTA_SetSendConfirmParam->optMsk;
+    zcl_mem_free( zclOTA_SetSendConfirmParam );
+    zclOTA_SetSendConfirmParam = NULL;
+  }
+
+  return zcl_SendCommandWithConfirm( srcEP, dstAddr, clusterID, cmd, specific, direction, disableDefaultRsp,
+                                    manuCode, seqNum, cmdFormatLen, cmdFormat, cnfCB, cnfParam, optMsk );
+}
+
+/******************************************************************************
+ * @fn      zclOTA_SetSendConfirm
+ *
+ * @brief   pre-set send confirm in zclOTA_SendCommand
+ *
+ * @param   cnfCB - send confirm callback
+ * @param   cnfParam - parameters of send confirm callback
+ * @param   optMsk - force options setting
+ *
+ * @return  true if setting valid
+ */
+bool zclOTA_SetSendConfirm( pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk )
+{
+  if(zclOTA_SetSendConfirmParam == NULL)
+  {
+    zclOTA_SetSendConfirmParam = zcl_mem_alloc(sizeof(zclOTA_SetSendConfirmParam_t));
+    if(zclOTA_SetSendConfirmParam)
+    {
+      zclOTA_SetSendConfirmParam->cnfCB = cnfCB;
+      zclOTA_SetSendConfirmParam->cnfParam = cnfParam;
+      zclOTA_SetSendConfirmParam->optMsk = optMsk;
+      return true;
+    }
+  }
+  return false;
+}
+
 #if defined OTA_SERVER
 /******************************************************************************
  * @fn      zclOTA_SendImageNotify
@@ -280,7 +349,7 @@ ZStatus_t zclOTA_SendImageNotify (uint8_t srcEp, afAddrType_t *dstAddr,
     disableDefaultRsp = FALSE;
   }
 
-  status = zcl_SendCommand ( srcEp, dstAddr, ZCL_CLUSTER_ID_OTA,
+  status = zclOTA_SendCommand ( srcEp, dstAddr, ZCL_CLUSTER_ID_OTA,
                              COMMAND_OTA_UPGRADE_IMAGE_NOTIFY, TRUE,
                              ZCL_FRAME_SERVER_CLIENT_DIR, disableDefaultRsp, 0,
                              zclOTA_SeqNo++, ( uint16_t ) ( pBuf - buf ), buf );
@@ -318,7 +387,7 @@ ZStatus_t zclOTA_SendQueryNextImageRsp (uint8_t srcEp, afAddrType_t *dstAddr,
     pBuf = OsalPort_bufferUint32 ( pBuf, pParams->imageSize );
   }
 
-  status = zcl_SendCommand ( srcEp, dstAddr, ZCL_CLUSTER_ID_OTA,
+  status = zclOTA_SendCommand ( srcEp, dstAddr, ZCL_CLUSTER_ID_OTA,
                              COMMAND_OTA_UPGRADE_QUERY_NEXT_IMAGE_RESPONSE, TRUE,
                              ZCL_FRAME_SERVER_CLIENT_DIR, TRUE, 0,
                              transSeqNum, ( uint16_t ) ( pBuf - buf ), buf );
@@ -388,7 +457,7 @@ ZStatus_t zclOTA_SendImageBlockRsp (uint8_t srcEp, afAddrType_t *dstAddr,
     *pBuf++ = HI_UINT16 ( pParams->rsp.wait.blockReqDelay );
   }
 
-  status = zcl_SendCommand ( srcEp, dstAddr, ZCL_CLUSTER_ID_OTA,
+  status = zclOTA_SendCommand ( srcEp, dstAddr, ZCL_CLUSTER_ID_OTA,
                              COMMAND_OTA_UPGRADE_IMAGE_BLOCK_RESPONSE, TRUE,
                              ZCL_FRAME_SERVER_CLIENT_DIR, TRUE, 0,
                              transSeqNum, len, buf );
@@ -425,7 +494,7 @@ ZStatus_t zclOTA_SendUpgradeEndRsp (uint8_t srcEp, afAddrType_t *dstAddr,
   pBuf = OsalPort_bufferUint32 ( pBuf, pParams->currentTime );
   pBuf = OsalPort_bufferUint32 ( pBuf, pParams->upgradeTime );
 
-  status = zcl_SendCommand ( srcEp, dstAddr, ZCL_CLUSTER_ID_OTA,
+  status = zclOTA_SendCommand ( srcEp, dstAddr, ZCL_CLUSTER_ID_OTA,
                              COMMAND_OTA_UPGRADE_UPGRADE_END_RESPONSE, TRUE,
                              ZCL_FRAME_SERVER_CLIENT_DIR, TRUE, 0,
                              transSeqNum, PAYLOAD_MAX_LEN_UPGRADE_END_RSP, buf );
@@ -463,7 +532,7 @@ ZStatus_t zclOTA_SendQuerySpecificFileRsp (uint8_t srcEp, afAddrType_t *dstAddr,
     pBuf = OsalPort_bufferUint32 ( pBuf, pParams->imageSize );
   }
 
-  status = zcl_SendCommand ( srcEp, dstAddr, ZCL_CLUSTER_ID_OTA,
+  status = zclOTA_SendCommand ( srcEp, dstAddr, ZCL_CLUSTER_ID_OTA,
                              COMMAND_OTA_UPGRADE_QUERY_DEVICE_SPECIFIC_FILE_RESPONSE, TRUE,
                              ZCL_FRAME_SERVER_CLIENT_DIR, TRUE, 0,
                              transSeqNum, ( uint16_t ) ( pBuf - buf ), buf );
@@ -552,7 +621,7 @@ ZStatus_t zclOTA_SendQueryNextImageReq (uint8_t srcEp, afAddrType_t *dstAddr,
     *pBuf++ = HI_UINT16 ( pParams->hardwareVersion );
   }
 
-  status = zcl_SendCommand ( srcEp, dstAddr, ZCL_CLUSTER_ID_OTA,
+  status = zclOTA_SendCommand ( srcEp, dstAddr, ZCL_CLUSTER_ID_OTA,
                              COMMAND_OTA_UPGRADE_QUERY_NEXT_IMAGE_REQUEST, TRUE,
                              ZCL_FRAME_CLIENT_SERVER_DIR, FALSE, 0,
                              zclOTA_SeqNo++, ( uint16_t ) ( pBuf - buf ), buf );
@@ -599,7 +668,7 @@ ZStatus_t zclOTA_SendImageBlockReq (uint8_t srcEp, afAddrType_t *dstAddr,
     *pBuf++ = HI_UINT16 ( pParams->blockReqDelay );
   }
 
-  status = zcl_SendCommand ( srcEp, dstAddr, ZCL_CLUSTER_ID_OTA,
+  status = zclOTA_SendCommand ( srcEp, dstAddr, ZCL_CLUSTER_ID_OTA,
                              COMMAND_OTA_UPGRADE_IMAGE_BLOCK_REQUEST, TRUE,
                              ZCL_FRAME_CLIENT_SERVER_DIR, FALSE, 0,
                              zclOTA_SeqNo++, ( uint16_t ) ( pBuf - buf ), buf );
@@ -647,7 +716,7 @@ ZStatus_t zclOTA_SendImagePageReq (uint8_t srcEp, afAddrType_t *dstAddr,
     pBuf += Z_EXTADDR_LEN;
   }
 
-  status = zcl_SendCommand ( srcEp, dstAddr, ZCL_CLUSTER_ID_OTA,
+  status = zclOTA_SendCommand ( srcEp, dstAddr, ZCL_CLUSTER_ID_OTA,
                              COMMAND_OTA_UPGRADE_IMAGE_PAGE_REQUEST, TRUE,
                              ZCL_FRAME_CLIENT_SERVER_DIR, FALSE, 0,
                              zclOTA_SeqNo++, ( uint16_t ) ( pBuf - buf ), buf );
@@ -688,7 +757,7 @@ ZStatus_t zclOTA_SendQueryDevSpecFileReq (uint8_t srcEp, afAddrType_t *dstAddr,
   *pBuf++ = HI_UINT16 ( pParams->stackVersion );
 
 
-  status = zcl_SendCommand ( srcEp, dstAddr, ZCL_CLUSTER_ID_OTA,
+  status = zclOTA_SendCommand ( srcEp, dstAddr, ZCL_CLUSTER_ID_OTA,
                              COMMAND_OTA_UPGRADE_QUERY_DEVICE_SPECIFIC_FILE_REQUEST, TRUE,
                              ZCL_FRAME_CLIENT_SERVER_DIR, FALSE, 0,
                              zclOTA_SeqNo++, ( uint16_t ) ( pBuf - buf ), buf );
@@ -748,7 +817,7 @@ ZStatus_t zclOTA_SendUpgradeEndReq (uint8_t srcEp, afAddrType_t *dstAddr,
 
   zclOTA_OtaUpgradeEndReqTransSeq = zclOTA_SeqNo++;
 
-  status = zcl_SendCommand ( srcEp, dstAddr, ZCL_CLUSTER_ID_OTA,
+  status = zclOTA_SendCommand ( srcEp, dstAddr, ZCL_CLUSTER_ID_OTA,
                              COMMAND_OTA_UPGRADE_UPGRADE_END_REQUEST, TRUE,
                              ZCL_FRAME_CLIENT_SERVER_DIR, FALSE, 0,
                              zclOTA_OtaUpgradeEndReqTransSeq, ( uint16_t ) ( pBuf - buf ), buf );

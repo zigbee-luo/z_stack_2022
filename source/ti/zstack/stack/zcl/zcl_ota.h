@@ -458,6 +458,33 @@ extern uint8_t zclOTA_Permit;
  */
 
 /******************************************************************************
+ * @fn      zclOTA_SendCommand
+ *
+ * @brief   send command in ota service and trigger ota send confirm
+ *
+ * @param   same with zcl_SendCommand
+ *
+ * @return  ZStatus_t
+ */
+ZStatus_t zclOTA_SendCommand( uint8_t srcEP, afAddrType_t *dstAddr,
+                             uint16_t clusterID, uint8_t cmd, uint8_t specific, uint8_t direction,
+                             uint8_t disableDefaultRsp, uint16_t manuCode, uint8_t seqNum,
+                             uint16_t cmdFormatLen, uint8_t *cmdFormat );
+
+/******************************************************************************
+ * @fn      zclOTA_SetSendConfirm
+ *
+ * @brief   pre-set send confirm in zclOTA_SendCommand
+ *
+ * @param   cnfCB - send confirm callback
+ * @param   cnfParam - parameters of send confirm callback
+ * @param   optMsk - force options setting
+ *
+ * @return  true if setting valid
+ */
+bool zclOTA_SetSendConfirm( pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk );
+
+/******************************************************************************
  * @fn      zclOTA_Register
  *
  * @brief   Called by an application to register for callback messages
