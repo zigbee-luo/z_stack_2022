@@ -285,17 +285,19 @@ void zclGeneral_RegisterUnsupportCallback( ZStatus_t (*callback)(zclIncoming_t*p
  *
  * @return  ZStatus_t
  */
-ZStatus_t zclGeneral_SendIdentify( uint8_t srcEP, afAddrType_t *dstAddr,
-                                   uint16_t identifyTime, uint8_t disableDefaultRsp, uint8_t seqNum )
+ZStatus_t zclGeneral_SendIdentifyWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr,
+                                             uint16_t identifyTime, uint8_t disableDefaultRsp, uint8_t seqNum,
+                                             pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk )
 {
   uint8_t buf[2];
 
   buf[0] = LO_UINT16( identifyTime );
   buf[1] = HI_UINT16( identifyTime );
 
-  return zcl_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_GENERAL_IDENTIFY,
-                          COMMAND_IDENTIFY_IDENTIFY, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR,
-                          disableDefaultRsp, 0, seqNum, 2, buf );
+  return zcl_SendCommandWithConfirm( srcEP, dstAddr, ZCL_CLUSTER_ID_GENERAL_IDENTIFY,
+                                    COMMAND_IDENTIFY_IDENTIFY, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR,
+                                    disableDefaultRsp, 0, seqNum, 2, buf,
+                                    cnfCB, cnfParam, optMsk);
 }
 
 /*********************************************************************
@@ -369,17 +371,19 @@ ZStatus_t zclGeneral_SendIdentifyQueryResponse( uint8_t srcEP, afAddrType_t *dst
  *
  * @return  ZStatus_t
  */
-ZStatus_t zclGeneral_SendGroupRequest( uint8_t srcEP, afAddrType_t *dstAddr,
-                                       uint8_t cmd, uint16_t groupID, uint8_t disableDefaultRsp, uint8_t seqNum )
+ZStatus_t zclGeneral_SendGroupRequestWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr,
+                                                 uint8_t cmd, uint16_t groupID, uint8_t disableDefaultRsp, uint8_t seqNum,
+                                                 pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk )
 {
   uint8_t buf[2];
 
   buf[0] = LO_UINT16( groupID );
   buf[1] = HI_UINT16( groupID );
 
-  return ( zcl_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_GENERAL_GROUPS,
-                            cmd, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR,
-                            disableDefaultRsp, 0, seqNum, 2, buf ) );
+  return ( zcl_SendCommandWithConfirm( srcEP, dstAddr, ZCL_CLUSTER_ID_GENERAL_GROUPS,
+                                      cmd, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR,
+                                      disableDefaultRsp, 0, seqNum, 2, buf,
+                                      cnfCB, cnfParam, optMsk ) );
 }
 
 /*********************************************************************
@@ -400,9 +404,10 @@ ZStatus_t zclGeneral_SendGroupRequest( uint8_t srcEP, afAddrType_t *dstAddr,
  *
  * @return  ZStatus_t
  */
-ZStatus_t zclGeneral_SendAddGroupRequestEx( uint8_t srcEP, afAddrType_t *dstAddr,
-                                          uint8_t cmd, uint16_t groupID, uint8_t *groupName,
-                                          uint8_t disableDefaultRsp, uint8_t seqNum, uint8_t isReqFromApp )
+ZStatus_t zclGeneral_SendAddGroupRequestExWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr,
+                                                      uint8_t cmd, uint16_t groupID, uint8_t *groupName,
+                                                      uint8_t disableDefaultRsp, uint8_t seqNum, uint8_t isReqFromApp,
+                                                      pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk )
 {
   uint8_t *buf;
   uint8_t *pBuf;
@@ -423,15 +428,17 @@ ZStatus_t zclGeneral_SendAddGroupRequestEx( uint8_t srcEP, afAddrType_t *dstAddr
 
   if(isReqFromApp)
   {
-    status = zcl_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_GENERAL_GROUPS,
+    status = zcl_SendCommandWithConfirm( srcEP, dstAddr, ZCL_CLUSTER_ID_GENERAL_GROUPS,
                               cmd, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR,
-                              disableDefaultRsp, 0, seqNum, len, buf );
+                              disableDefaultRsp, 0, seqNum, len, buf,
+                              cnfCB, cnfParam, optMsk );
   }
   else
   {
-    status = zcl_StackSendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_GENERAL_GROUPS,
+    status = zcl_StackSendCommandWithConfirm( srcEP, dstAddr, ZCL_CLUSTER_ID_GENERAL_GROUPS,
                                 cmd, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR,
-                                disableDefaultRsp, 0, seqNum, len, buf );
+                                disableDefaultRsp, 0, seqNum, len, buf,
+                                cnfCB, cnfParam, optMsk );
   }
 
     zcl_mem_free( buf );
@@ -459,9 +466,10 @@ ZStatus_t zclGeneral_SendAddGroupRequestEx( uint8_t srcEP, afAddrType_t *dstAddr
  *
  * @return  ZStatus_t
  */
-ZStatus_t zclGeneral_SendGroupGetMembershipRequest( uint8_t srcEP, afAddrType_t *dstAddr,
+ZStatus_t zclGeneral_SendGroupGetMembershipRequestWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr,
                                                     uint8_t cmd, uint8_t rspCmd, uint8_t direction, uint8_t capacity,
-                                                    uint8_t grpCnt, uint16_t *grpList, uint8_t disableDefaultRsp, uint8_t seqNum )
+                                                    uint8_t grpCnt, uint16_t *grpList, uint8_t disableDefaultRsp, uint8_t seqNum,
+                                                    pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk )
 {
   uint8_t *buf;
   uint8_t *pBuf;
@@ -489,9 +497,10 @@ ZStatus_t zclGeneral_SendGroupGetMembershipRequest( uint8_t srcEP, afAddrType_t 
       *pBuf++ = HI_UINT16( grpList[i] );
     }
 
-    status = zcl_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_GENERAL_GROUPS,
-                              cmd, TRUE, direction,
-                              disableDefaultRsp, 0, seqNum, len, buf );
+    status = zcl_SendCommandWithConfirm( srcEP, dstAddr, ZCL_CLUSTER_ID_GENERAL_GROUPS,
+                                        cmd, TRUE, direction,
+                                        disableDefaultRsp, 0, seqNum, len, buf,
+                                        cnfCB, cnfParam, optMsk );
     zcl_mem_free( buf );
   }
   else
@@ -602,9 +611,10 @@ ZStatus_t zclGeneral_SendGroupViewResponse( uint8_t srcEP, afAddrType_t *dstAddr
  *
  * @return  ZStatus_t
  */
-ZStatus_t zclGeneral_SendAddSceneRequest( uint8_t srcEP, afAddrType_t *dstAddr,
-                                          uint8_t cmd, zclGeneral_Scene_t *scene,
-                                          uint8_t disableDefaultRsp, uint8_t seqNum )
+ZStatus_t zclGeneral_SendAddSceneRequestWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr,
+                                                    uint8_t cmd, zclGeneral_Scene_t *scene,
+                                                    uint8_t disableDefaultRsp, uint8_t seqNum,
+                                                    pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk )
 {
   uint8_t *buf;
   uint8_t *pBuf;
@@ -634,9 +644,10 @@ ZStatus_t zclGeneral_SendAddSceneRequest( uint8_t srcEP, afAddrType_t *dstAddr,
     if ( scene->extLen > 0 )
       zcl_memcpy( pBuf, scene->extField, scene->extLen );
 
-    status = zcl_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_GENERAL_SCENES,
+    status = zcl_SendCommandWithConfirm( srcEP, dstAddr, ZCL_CLUSTER_ID_GENERAL_SCENES,
                               cmd, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR,
-                              disableDefaultRsp, 0, seqNum, len, buf );
+                              disableDefaultRsp, 0, seqNum, len, buf,
+                              cnfCB, cnfParam, optMsk );
     zcl_mem_free( buf );
   }
   else
@@ -668,9 +679,10 @@ ZStatus_t zclGeneral_SendAddSceneRequest( uint8_t srcEP, afAddrType_t *dstAddr,
  * @param   seqNum - sequence number
  * @return  ZStatus_t
  */
-ZStatus_t zclGeneral_SendSceneRequest( uint8_t srcEP, afAddrType_t *dstAddr,
+ZStatus_t zclGeneral_SendSceneRequestWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr,
                                        uint8_t cmd, uint16_t groupID, uint8_t sceneID,
-                                       uint8_t disableDefaultRsp, uint8_t seqNum )
+                                       uint8_t disableDefaultRsp, uint8_t seqNum,
+                                       pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk )
 {
   uint8_t buf[3];
   uint8_t len = 2;
@@ -684,9 +696,10 @@ ZStatus_t zclGeneral_SendSceneRequest( uint8_t srcEP, afAddrType_t *dstAddr,
     len++;
   }
 
-  return ( zcl_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_GENERAL_SCENES,
+  return ( zcl_SendCommandWithConfirm( srcEP, dstAddr, ZCL_CLUSTER_ID_GENERAL_SCENES,
                             cmd, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR,
-                            disableDefaultRsp, 0, seqNum, len, buf ) );
+                            disableDefaultRsp, 0, seqNum, len, buf,
+                            cnfCB, cnfParam, optMsk ) );
 }
 
 /*********************************************************************
@@ -946,18 +959,20 @@ ZStatus_t zclGeneral_SendSceneCopyResponse( uint8_t srcEP, afAddrType_t *dstAddr
  *
  * @return  ZStatus_t
  */
-ZStatus_t zclGeneral_SendOnOff_CmdOffWithEffect( uint8_t srcEP, afAddrType_t *dstAddr,
+ZStatus_t zclGeneral_SendOnOff_CmdOffWithEffectWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr,
                                                  uint8_t effectId, uint8_t effectVariant,
-                                                 uint8_t disableDefaultRsp, uint8_t seqNum )
+                                                 uint8_t disableDefaultRsp, uint8_t seqNum,
+                                                 pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk )
 {
   uint8_t buf[2];
 
   buf[0] = effectId;
   buf[1] = effectVariant;
 
-  return zcl_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_GENERAL_ON_OFF,
+  return zcl_SendCommandWithConfirm( srcEP, dstAddr, ZCL_CLUSTER_ID_GENERAL_ON_OFF,
                           COMMAND_ON_OFF_OFF_WITH_EFFECT, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR,
-                          disableDefaultRsp, 0, seqNum, 2, buf );
+                          disableDefaultRsp, 0, seqNum, 2, buf,
+                          cnfCB, cnfParam, optMsk );
 }
 
 /*********************************************************************
@@ -975,9 +990,10 @@ ZStatus_t zclGeneral_SendOnOff_CmdOffWithEffect( uint8_t srcEP, afAddrType_t *ds
  *
  * @return  ZStatus_t
  */
-ZStatus_t zclGeneral_SendOnOff_CmdOnWithTimedOff ( uint8_t srcEP, afAddrType_t *dstAddr,
+ZStatus_t zclGeneral_SendOnOff_CmdOnWithTimedOffWithConfirm ( uint8_t srcEP, afAddrType_t *dstAddr,
                                                    zclOnOffCtrl_t onOffCtrl, uint16_t onTime, uint16_t offWaitTime,
-                                                   uint8_t disableDefaultRsp, uint8_t seqNum )
+                                                   uint8_t disableDefaultRsp, uint8_t seqNum,
+                                                   pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk )
 {
   uint8_t buf[5];
 
@@ -987,9 +1003,10 @@ ZStatus_t zclGeneral_SendOnOff_CmdOnWithTimedOff ( uint8_t srcEP, afAddrType_t *
   buf[3] = LO_UINT16( offWaitTime );
   buf[4] = HI_UINT16( offWaitTime );
 
-  return zcl_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_GENERAL_ON_OFF,
+  return zcl_SendCommandWithConfirm( srcEP, dstAddr, ZCL_CLUSTER_ID_GENERAL_ON_OFF,
                           COMMAND_ON_OFF_ON_WITH_TIMED_OFF, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR,
-                          disableDefaultRsp, 0, seqNum, 5, buf );
+                          disableDefaultRsp, 0, seqNum, 5, buf,
+                          cnfCB, cnfParam, optMsk );
 }
 #endif // ZCL_LIGHT_LINK_ENHANCE
 #endif // ZCL_ON_OFF
@@ -1011,9 +1028,10 @@ ZStatus_t zclGeneral_SendOnOff_CmdOnWithTimedOff ( uint8_t srcEP, afAddrType_t *
  *
  * @return  ZStatus_t
  */
-ZStatus_t zclGeneral_SendLevelControlMoveToLevelRequest( uint8_t srcEP, afAddrType_t *dstAddr,
+ZStatus_t zclGeneral_SendLevelControlMoveToLevelRequestWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr,
                                                          uint8_t cmd, uint8_t level, uint16_t transTime,
-                                                         uint8_t disableDefaultRsp, uint8_t seqNum )
+                                                         uint8_t disableDefaultRsp, uint8_t seqNum,
+                                                         pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk )
 {
   uint8_t buf[3];
 
@@ -1021,9 +1039,10 @@ ZStatus_t zclGeneral_SendLevelControlMoveToLevelRequest( uint8_t srcEP, afAddrTy
   buf[1] = LO_UINT16( transTime );
   buf[2] = HI_UINT16( transTime );
 
-  return zcl_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_GENERAL_LEVEL_CONTROL,
+  return zcl_SendCommandWithConfirm( srcEP, dstAddr, ZCL_CLUSTER_ID_GENERAL_LEVEL_CONTROL,
                           cmd, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR,
-                          disableDefaultRsp, 0, seqNum, 3, buf );
+                          disableDefaultRsp, 0, seqNum, 3, buf,
+                          cnfCB, cnfParam, optMsk );
 }
 
 /*********************************************************************
@@ -1043,18 +1062,20 @@ ZStatus_t zclGeneral_SendLevelControlMoveToLevelRequest( uint8_t srcEP, afAddrTy
  *
  * @return  ZStatus_t
  */
-ZStatus_t zclGeneral_SendLevelControlMoveRequest( uint8_t srcEP, afAddrType_t *dstAddr,
+ZStatus_t zclGeneral_SendLevelControlMoveRequestWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr,
                                                   uint8_t cmd, uint8_t moveMode, uint8_t rate,
-                                                  uint8_t disableDefaultRsp, uint8_t seqNum )
+                                                  uint8_t disableDefaultRsp, uint8_t seqNum,
+                                                  pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk )
 {
   uint8_t buf[2];
 
   buf[0] = moveMode;
   buf[1] = rate;
 
-  return zcl_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_GENERAL_LEVEL_CONTROL,
+  return zcl_SendCommandWithConfirm( srcEP, dstAddr, ZCL_CLUSTER_ID_GENERAL_LEVEL_CONTROL,
                           cmd, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR,
-                          disableDefaultRsp, 0, seqNum, 2, buf );
+                          disableDefaultRsp, 0, seqNum, 2, buf,
+                          cnfCB, cnfParam, optMsk );
 }
 
 /*********************************************************************
@@ -1075,9 +1096,10 @@ ZStatus_t zclGeneral_SendLevelControlMoveRequest( uint8_t srcEP, afAddrType_t *d
  *
  * @return  ZStatus_t
  */
-ZStatus_t zclGeneral_SendLevelControlStepRequest( uint8_t srcEP, afAddrType_t *dstAddr,
+ZStatus_t zclGeneral_SendLevelControlStepRequestWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr,
                                                   uint8_t cmd, uint8_t stepMode, uint8_t stepSize, uint16_t transTime,
-                                                  uint8_t disableDefaultRsp, uint8_t seqNum )
+                                                  uint8_t disableDefaultRsp, uint8_t seqNum,
+                                                  pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk )
 {
   uint8_t buf[4];
 
@@ -1086,9 +1108,10 @@ ZStatus_t zclGeneral_SendLevelControlStepRequest( uint8_t srcEP, afAddrType_t *d
   buf[2] = LO_UINT16( transTime );
   buf[3] = HI_UINT16( transTime );
 
-  return zcl_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_GENERAL_LEVEL_CONTROL,
+  return zcl_SendCommandWithConfirm( srcEP, dstAddr, ZCL_CLUSTER_ID_GENERAL_LEVEL_CONTROL,
                           cmd, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR,
-                          disableDefaultRsp, 0, seqNum, 4, buf );
+                          disableDefaultRsp, 0, seqNum, 4, buf,
+                          cnfCB, cnfParam, optMsk );
 }
 
 /*********************************************************************
@@ -1105,12 +1128,14 @@ ZStatus_t zclGeneral_SendLevelControlStepRequest( uint8_t srcEP, afAddrType_t *d
  *
  * @return  ZStatus_t
  */
-ZStatus_t zclGeneral_SendLevelControlStopRequest( uint8_t srcEP, afAddrType_t *dstAddr, uint8_t cmd,
-                                                  uint8_t disableDefaultRsp, uint8_t seqNum )
+ZStatus_t zclGeneral_SendLevelControlStopRequestWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr, uint8_t cmd,
+                                                  uint8_t disableDefaultRsp, uint8_t seqNum,
+                                                  pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk )
 {
-  return zcl_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_GENERAL_LEVEL_CONTROL,
+  return zcl_SendCommandWithConfirm( srcEP, dstAddr, ZCL_CLUSTER_ID_GENERAL_LEVEL_CONTROL,
                           cmd, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR,
-                          disableDefaultRsp, 0, seqNum, 0, NULL );
+                          disableDefaultRsp, 0, seqNum, 0, NULL,
+                          cnfCB, cnfParam, optMsk );
 }
 #endif // ZCL_LEVEL_CTRL
 
@@ -1128,9 +1153,10 @@ ZStatus_t zclGeneral_SendLevelControlStopRequest( uint8_t srcEP, afAddrType_t *d
  *
  * @return  ZStatus_t
  */
-ZStatus_t zclGeneral_SendAlarm( uint8_t srcEP, afAddrType_t *dstAddr,
+ZStatus_t zclGeneral_SendAlarmWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr,
                                 uint8_t alarmCode, uint16_t clusterID,
-                                uint8_t disableDefaultRsp, uint8_t seqNum )
+                                uint8_t disableDefaultRsp, uint8_t seqNum,
+                                pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk )
 {
   uint8_t buf[3];
 
@@ -1138,9 +1164,10 @@ ZStatus_t zclGeneral_SendAlarm( uint8_t srcEP, afAddrType_t *dstAddr,
   buf[1] = LO_UINT16( clusterID );
   buf[2] = HI_UINT16( clusterID );
 
-  return zcl_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_GENERAL_ALARMS,
+  return zcl_SendCommandWithConfirm( srcEP, dstAddr, ZCL_CLUSTER_ID_GENERAL_ALARMS,
                           COMMAND_ALARMS_ALARM, TRUE, ZCL_FRAME_SERVER_CLIENT_DIR,
-                          disableDefaultRsp, 0, seqNum, 3, buf );
+                          disableDefaultRsp, 0, seqNum, 3, buf,
+                          cnfCB, cnfParam, optMsk );
 }
 
 /*********************************************************************
@@ -1155,9 +1182,10 @@ ZStatus_t zclGeneral_SendAlarm( uint8_t srcEP, afAddrType_t *dstAddr,
  *
  * @return  ZStatus_t
 */
-ZStatus_t zclGeneral_SendAlarmReset( uint8_t srcEP, afAddrType_t *dstAddr,
+ZStatus_t zclGeneral_SendAlarmResetWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr,
                                      uint8_t alarmCode, uint16_t clusterID,
-                                     uint8_t disableDefaultRsp, uint8_t seqNum )
+                                     uint8_t disableDefaultRsp, uint8_t seqNum,
+                                     pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk )
 {
   uint8_t buf[3];
 
@@ -1165,9 +1193,10 @@ ZStatus_t zclGeneral_SendAlarmReset( uint8_t srcEP, afAddrType_t *dstAddr,
   buf[1] = LO_UINT16( clusterID );
   buf[2] = HI_UINT16( clusterID );
 
-  return zcl_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_GENERAL_ALARMS,
+  return zcl_SendCommandWithConfirm( srcEP, dstAddr, ZCL_CLUSTER_ID_GENERAL_ALARMS,
                           COMMAND_ALARMS_RESET_ALARM, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR,
-                          disableDefaultRsp, 0, seqNum, 3, buf );
+                          disableDefaultRsp, 0, seqNum, 3, buf,
+                          cnfCB, cnfParam, optMsk );
 }
 
 /*********************************************************************
@@ -1249,9 +1278,10 @@ ZStatus_t zclGeneral_SendAlarmGetEventLog( uint8_t srcEP, afAddrType_t *dstAddr,
  *
  * @return  ZStatus_t
  */
-ZStatus_t zclGeneral_SendAlarmPublishEventLog( uint8_t srcEP, afAddrType_t *dstAddr,
+ZStatus_t zclGeneral_SendAlarmPublishEventLogWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr,
                                                zclPublishEventLog_t *pEventLog,
-                                               uint8_t disableDefaultRsp, uint8_t seqNum )
+                                               uint8_t disableDefaultRsp, uint8_t seqNum,
+                                               pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk )
 {
   uint8_t *buf;
   uint8_t *pBuf;
@@ -1279,9 +1309,10 @@ ZStatus_t zclGeneral_SendAlarmPublishEventLog( uint8_t srcEP, afAddrType_t *dstA
     pBuf = zcl_buffer_uint32( pBuf, pLogs->eventTime );
   }
 
-  return zcl_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_GENERAL_ALARMS,
+  return zcl_SendCommandWithConfirm( srcEP, dstAddr, ZCL_CLUSTER_ID_GENERAL_ALARMS,
                           COMMAND_ALARMS_PUBLISH_EVENT_LOG, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR,
-                          disableDefaultRsp, 0, seqNum, bufLen, buf );
+                          disableDefaultRsp, 0, seqNum, bufLen, buf,
+                          cnfCB, cnfParam, optMsk );
 }
 #endif // SE_UK_EXT
 #endif // ZCL_ALARMS
@@ -1298,9 +1329,10 @@ ZStatus_t zclGeneral_SendAlarmPublishEventLog( uint8_t srcEP, afAddrType_t *dstA
  *
  * @return  ZStatus_t
  */
-ZStatus_t zclGeneral_SendLocationSetAbsolute( uint8_t srcEP, afAddrType_t *dstAddr,
+ZStatus_t zclGeneral_SendLocationSetAbsoluteWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr,
                                               zclLocationAbsolute_t *absLoc,
-                                              uint8_t disableDefaultRsp, uint8_t seqNum )
+                                              uint8_t disableDefaultRsp, uint8_t seqNum,
+                                              pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk )
 {
    uint8_t buf[10]; // 5 fields (2 octects each)
 
@@ -1315,9 +1347,10 @@ ZStatus_t zclGeneral_SendLocationSetAbsolute( uint8_t srcEP, afAddrType_t *dstAd
    buf[8] = LO_UINT16( absLoc->pathLossExponent );
    buf[9] = HI_UINT16( absLoc->pathLossExponent );
 
-   return zcl_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_GENERAL_LOCATION,
+   return zcl_SendCommandWithConfirm( srcEP, dstAddr, ZCL_CLUSTER_ID_GENERAL_LOCATION,
                            COMMAND_LOCATION_SET_ABSOLUTE, TRUE,
-                           ZCL_FRAME_CLIENT_SERVER_DIR, disableDefaultRsp, 0, seqNum, 10, buf );
+                           ZCL_FRAME_CLIENT_SERVER_DIR, disableDefaultRsp, 0, seqNum, 10, buf,
+                           cnfCB, cnfParam, optMsk );
 }
 
 /*********************************************************************
@@ -1331,9 +1364,10 @@ ZStatus_t zclGeneral_SendLocationSetAbsolute( uint8_t srcEP, afAddrType_t *dstAd
  *
  * @return  ZStatus_t
  */
-ZStatus_t zclGeneral_SendLocationSetDevCfg( uint8_t srcEP, afAddrType_t *dstAddr,
+ZStatus_t zclGeneral_SendLocationSetDevCfgWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr,
                                             zclLocationDevCfg_t *devCfg,
-                                            uint8_t disableDefaultRsp, uint8_t seqNum )
+                                            uint8_t disableDefaultRsp, uint8_t seqNum,
+                                            pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk )
 {
    uint8_t buf[9];  // 4 fields (2 octects each) + 1 field with 1 octect
 
@@ -1347,9 +1381,10 @@ ZStatus_t zclGeneral_SendLocationSetDevCfg( uint8_t srcEP, afAddrType_t *dstAddr
    buf[7] = LO_UINT16( devCfg->reportPeriod );
    buf[8] = HI_UINT16( devCfg->reportPeriod );
 
-   return zcl_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_GENERAL_LOCATION,
+   return zcl_SendCommandWithConfirm( srcEP, dstAddr, ZCL_CLUSTER_ID_GENERAL_LOCATION,
                            COMMAND_LOCATION_SET_DEV_CFG, TRUE,
-                           ZCL_FRAME_CLIENT_SERVER_DIR, disableDefaultRsp, 0, seqNum, 9, buf );
+                           ZCL_FRAME_CLIENT_SERVER_DIR, disableDefaultRsp, 0, seqNum, 9, buf,
+                           cnfCB, cnfParam, optMsk );
 }
 
 /*********************************************************************
@@ -1363,16 +1398,18 @@ ZStatus_t zclGeneral_SendLocationSetDevCfg( uint8_t srcEP, afAddrType_t *dstAddr
  *
  * @return  ZStatus_t
  */
-ZStatus_t zclGeneral_SendLocationGetDevCfg( uint8_t srcEP, afAddrType_t *dstAddr,
-                                            uint8_t *targetAddr, uint8_t disableDefaultRsp, uint8_t seqNum )
+ZStatus_t zclGeneral_SendLocationGetDevCfgWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr,
+                                            uint8_t *targetAddr, uint8_t disableDefaultRsp, uint8_t seqNum,
+                                            pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk )
 {
   uint8_t buf[8];
 
   zcl_memcpy( buf, targetAddr, 8 );
 
-  return zcl_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_GENERAL_LOCATION,
+  return zcl_SendCommandWithConfirm( srcEP, dstAddr, ZCL_CLUSTER_ID_GENERAL_LOCATION,
                           COMMAND_LOCATION_GET_DEV_CFG, TRUE,
-                          ZCL_FRAME_CLIENT_SERVER_DIR, disableDefaultRsp, 0, seqNum, 8, buf );
+                          ZCL_FRAME_CLIENT_SERVER_DIR, disableDefaultRsp, 0, seqNum, 8, buf,
+                          cnfCB, cnfParam, optMsk );
 }
 
 /*********************************************************************
@@ -1386,9 +1423,10 @@ ZStatus_t zclGeneral_SendLocationGetDevCfg( uint8_t srcEP, afAddrType_t *dstAddr
  *
  * @return  ZStatus_t
  */
-ZStatus_t zclGeneral_SendLocationGetData( uint8_t srcEP, afAddrType_t *dstAddr,
+ZStatus_t zclGeneral_SendLocationGetDataWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr,
                                           zclLocationGetData_t *locData,
-                                          uint8_t disableDefaultRsp, uint8_t seqNum )
+                                          uint8_t disableDefaultRsp, uint8_t seqNum,
+                                          pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk )
 {
   uint8_t buf[10]; // bitmap (1) + number responses (1) + IEEE Address (8)
   uint8_t *pBuf = buf;
@@ -1409,9 +1447,10 @@ ZStatus_t zclGeneral_SendLocationGetData( uint8_t srcEP, afAddrType_t *dstAddr,
     len += 8; // ieee addr
   }
 
-  return zcl_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_GENERAL_LOCATION,
+  return zcl_SendCommandWithConfirm( srcEP, dstAddr, ZCL_CLUSTER_ID_GENERAL_LOCATION,
                           COMMAND_LOCATION_GET_DATA, TRUE,
-                          ZCL_FRAME_CLIENT_SERVER_DIR, disableDefaultRsp, 0, seqNum, len, buf );
+                          ZCL_FRAME_CLIENT_SERVER_DIR, disableDefaultRsp, 0, seqNum, len, buf,
+                          cnfCB, cnfParam, optMsk );
 }
 
 /*********************************************************************
@@ -1464,9 +1503,10 @@ ZStatus_t zclGeneral_SendLocationDevCfgResponse( uint8_t srcEP, afAddrType_t *ds
 
  * @return  ZStatus_t
  */
-ZStatus_t zclGeneral_SendLocationData( uint8_t srcEP, afAddrType_t *dstAddr, uint8_t cmd,
+ZStatus_t zclGeneral_SendLocationDataWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr, uint8_t cmd,
                                        uint8_t status, zclLocationData_t *locData,
-                                       uint8_t disableDefaultRsp, uint8_t seqNum )
+                                       uint8_t disableDefaultRsp, uint8_t seqNum,
+                                       pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk )
 {
   uint8_t buf[16];
   uint8_t *pBuf = buf;
@@ -1524,9 +1564,10 @@ ZStatus_t zclGeneral_SendLocationData( uint8_t srcEP, afAddrType_t *dstAddr, uin
     }
   }
 
-  return zcl_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_GENERAL_LOCATION,
+  return zcl_SendCommandWithConfirm( srcEP, dstAddr, ZCL_CLUSTER_ID_GENERAL_LOCATION,
                           cmd, TRUE, ZCL_FRAME_SERVER_CLIENT_DIR,
-                          disableDefaultRsp, 0, seqNum, len, buf );
+                          disableDefaultRsp, 0, seqNum, len, buf,
+                          cnfCB, cnfParam, optMsk );
 }
 #endif // ZCL_LOCATION
 

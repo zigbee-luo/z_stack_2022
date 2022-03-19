@@ -1946,6 +1946,13 @@ extern "C"
 // Cluster ID + Attribute ID + Attribute data
 // The maximum length of the scene extension field:
 #define ZCL_GENERAL_SCENE_EXT_LEN   (ZCL_ON_OFF_EXTENSION_SIZE + ZCL_LEVEL_CTRL_EXTENSION_SIZE + ZCL_LIGHTING_EXTENSION_SIZE + ZCL_DOORLOCK_EXTENSION_SIZE + ZCL_WINDOWCOVERING_EXTENSION_SIZE)
+
+#if (ZCL_GENERAL_SCENE_EXT_LEN == 0)
+  // The minimum scene data size is not zero
+  #undef   ZCL_GENERAL_SCENE_EXT_LEN
+  #define  ZCL_GENERAL_SCENE_EXT_LEN   3  // clusterID(2) + attrSize(1)
+#endif
+
 #endif  //!defined ( ZCL_GENERAL_SCENE_EXT_LEN )
 
 // The maximum number of entries in the Scene table
@@ -2409,7 +2416,8 @@ typedef struct
  *  Use like:
  *      ZStatus_t zclGeneral_SendBasicResetFactoryDefaults( uint16_t srcEP, afAddrType_t *dstAddr, uint8_t disableDefaultRsp, uint8_t seqNum );
  */
-#define zclGeneral_SendBasicResetFactoryDefaults(a,b,c,d) zcl_SendCommand( (a), (b), ZCL_CLUSTER_ID_GENERAL_BASIC, COMMAND_BASIC_RESET_TO_FACTORY_DEFAULTS, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR, (c), 0, (d), 0, NULL )
+#define zclGeneral_SendBasicResetFactoryDefaultsWithConfirm(a,b,c,d,e,f,g) zcl_SendCommandWithConfirm( (a), (b), ZCL_CLUSTER_ID_GENERAL_BASIC, COMMAND_BASIC_RESET_TO_FACTORY_DEFAULTS, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR, (c), 0, (d), 0, NULL, (e), (f), (g) )
+#define zclGeneral_SendBasicResetFactoryDefaults(a,b,c,d) zclGeneral_SendBasicResetFactoryDefaultsWithConfirm( (a), (b), (c), (d), NULL, NULL, 0 )
 #endif // ZCL_BASIC
 
 #ifdef ZCL_IDENTIFY
@@ -2418,7 +2426,8 @@ typedef struct
  *  Use like:
  *      ZStatus_t zclGeneral_SendIdentifyQuery( uint8_t srcEP, afAddrType_t *dstAddr, uint8_t disableDefaultRsp, uint8_t seqNum );
  */
-#define zclGeneral_SendIdentifyQuery(a,b,c,d) zcl_SendCommand( (a), (b), ZCL_CLUSTER_ID_GENERAL_IDENTIFY, COMMAND_IDENTIFY_IDENTIFY_QUERY, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR, (c), 0, (d), 0, NULL )
+#define zclGeneral_SendIdentifyQueryWithConfirm(a,b,c,d,e,f,g) zcl_SendCommandWithConfirm( (a), (b), ZCL_CLUSTER_ID_GENERAL_IDENTIFY, COMMAND_IDENTIFY_IDENTIFY_QUERY, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR, (c), 0, (d), 0, NULL, (e), (f), (g) )
+#define zclGeneral_SendIdentifyQuery(a,b,c,d) zclGeneral_SendIdentifyQueryWithConfirm( (a), (b), (c), (d), NULL, NULL, 0 )
 #endif // ZCL_IDENTIFY
 
 /*!
@@ -2426,22 +2435,24 @@ typedef struct
  *  Use like:
  *      ZStatus_t zclGeneral_SendIdentifyQuery( uint8_t srcEP, afAddrType_t *dstAddr, uint8_t disableDefaultRsp, uint8_t seqNum );
  */
-#define zclGeneral_StackSendIdentifyQuery(a,b,c,d) zcl_StackSendCommand( (a), (b), ZCL_CLUSTER_ID_GENERAL_IDENTIFY, COMMAND_IDENTIFY_IDENTIFY_QUERY, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR, (c), 0, (d), 0, NULL )
-
+#define zclGeneral_StackSendIdentifyQueryWithConfirm(a,b,c,d,e,f,g) zcl_StackSendCommandWithConfirm( (a), (b), ZCL_CLUSTER_ID_GENERAL_IDENTIFY, COMMAND_IDENTIFY_IDENTIFY_QUERY, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR, (c), 0, (d), 0, NULL, (e), (f), (g) )
+#define zclGeneral_StackSendIdentifyQuery(a,b,c,d) zclGeneral_StackSendIdentifyQueryWithConfirm( (a), (b), (c), (d), NULL, NULL, NULL )
 #ifdef ZCL_GROUPS
 /*!
  *  Send a Group Add Command from Application Thread
  *  Use like:
  *      ZStatus_t zclGeneral_SendGroupAdd( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t groupID, uint8_t *groupName, uint8_t disableDefaultRsp, uint8_t seqNum );
  */
-#define zclGeneral_SendGroupAdd(a,b,c,d,e,f) zclGeneral_SendAddGroupRequestEx( (a), (b), COMMAND_GROUPS_ADD_GROUP, (c), (d), (e), (f), TRUE )
+#define zclGeneral_SendGroupAddWithConfirm(a,b,c,d,e,f,g,h,i) zclGeneral_SendAddGroupRequestExWithConfirm( (a), (b), COMMAND_GROUPS_ADD_GROUP, (c), (d), (e), (f), TRUE, (g), (h), (i) )
+#define zclGeneral_SendGroupAdd(a,b,c,d,e,f) zclGeneral_SendGroupAddWithConfirm( (a), (b), (c), (d), (e), (f), NULL, NULL, 0 )
 
 /*!
  *  Send a Group Add Command from Stack Thread
  *  Use like:
  *      ZStatus_t zclGeneral_SendGroupAdd( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t groupID, uint8_t *groupName, uint8_t disableDefaultRsp, uint8_t seqNum );
  */
-#define zclGeneral_StackSendGroupAdd(a,b,c,d,e,f) zclGeneral_SendAddGroupRequestEx( (a), (b), COMMAND_GROUPS_ADD_GROUP, (c), (d), (e), (f), FALSE )
+#define zclGeneral_StackSendGroupAddWithConfirm(a,b,c,d,e,f,g,h,i) zclGeneral_SendAddGroupRequestExWithConfirm( (a), (b), COMMAND_GROUPS_ADD_GROUP, (c), (d), (e), (f), FALSE, (g), (h), (i) )
+#define zclGeneral_StackSendGroupAdd(a,b,c,d,e,f) zclGeneral_StackSendGroupAddWithConfirm( (a), (b), (c), (d), (e), (f), NULL, NULL, 0 )
 
 
 /*!
@@ -2449,35 +2460,40 @@ typedef struct
  *  Use like:
  *      ZStatus_t zclGeneral_SendGroupView( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t groupID, uint8_t disableDefaultRsp, uint8_t seqNum );
  */
-#define zclGeneral_SendGroupView(a,b,c,d,e) zclGeneral_SendGroupRequest( (a), (b), COMMAND_GROUPS_VIEW_GROUP, (c), (d), (e) )
+#define zclGeneral_SendGroupViewWithConfirm(a,b,c,d,e,f,g,h) zclGeneral_SendGroupRequestWithConfirm( (a), (b), COMMAND_GROUPS_VIEW_GROUP, (c), (d), (e), (f), (g), (h) )
+#define zclGeneral_SendGroupView(a,b,c,d,e) zclGeneral_SendGroupViewWithConfirm( (a), (b), (c), (d), (e), NULL, NULL, 0 )
 
 /*!
  *  Send a Group Get Membership Command
  *  Use like:
  *      ZStatus_t zclGeneral_SendGroupGetMembership( uint8_t srcEP, afAddrType_t *dstAddr, uint8_t grpCnt, uint16_t *grpList, uint8_t disableDefaultRsp, uint8_t seqNum );
  */
-#define  zclGeneral_SendGroupGetMembership(a,b,c,d,e,f) zclGeneral_SendGroupGetMembershipRequest( (a), (b), COMMAND_GROUPS_GET_GROUP_MEMBERSHIP, FALSE, ZCL_FRAME_CLIENT_SERVER_DIR, 0, (c), (d), (e), (f) )
+#define  zclGeneral_SendGroupGetMembershipWithConfirm(a,b,c,d,e,f,g,h,i) zclGeneral_SendGroupGetMembershipRequestWithConfirm( (a), (b), COMMAND_GROUPS_GET_GROUP_MEMBERSHIP, FALSE, ZCL_FRAME_CLIENT_SERVER_DIR, 0, (c), (d), (e), (f), (g), (h), (i) )
+#define  zclGeneral_SendGroupGetMembership(a,b,c,d,e,f) zclGeneral_SendGroupGetMembershipWithConfirm( (a), (b), (c), (d), (e), (f), NULL, NULL, 0 )
 
 /*!
  *  Send a Group Remove Command
  *  Use like:
  *      ZStatus_t zclGeneral_SendGroupRemove( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t groupID, uint8_t disableDefaultRsp, uint8_t seqNum );
  */
-#define zclGeneral_SendGroupRemove(a,b,c,d,e) zclGeneral_SendGroupRequest( (a), (b), COMMAND_GROUPS_REMOVE_GROUP, (c), (d), (e) )
+#define zclGeneral_SendGroupRemoveWithConfirm(a,b,c,d,e,f,g,h) zclGeneral_SendGroupRequest( (a), (b), COMMAND_GROUPS_REMOVE_GROUP, (c), (d), (e), (f), (g), (h) )
+#define zclGeneral_SendGroupRemove(a,b,c,d,e) zclGeneral_SendGroupRemoveWithConfirm( (a), (b), (c), (d), (e), NULL, NULL, 0 )
 
 /*!
  *  Send a Group Remove ALL Command - COMMAND_GROUPS_REMOVE_ALL_GROUPS
  *  Use like:
  *      ZStatus_t zclGeneral_SendGroupRemoveAll( uint16_t srcEP, afAddrType_t *dstAddr, uint8_t disableDefaultRsp, uint8_t seqNum );
  */
-#define zclGeneral_SendGroupRemoveAll(a,b,c,d) zcl_SendCommand( (a), (b), ZCL_CLUSTER_ID_GENERAL_GROUPS, COMMAND_GROUPS_REMOVE_ALL_GROUPS, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR, (c), 0, (d), 0, NULL )
+#define zclGeneral_SendGroupRemoveAllWithConfirm(a,b,c,d,e,f,g) zcl_SendCommandWithConfirm( (a), (b), ZCL_CLUSTER_ID_GENERAL_GROUPS, COMMAND_GROUPS_REMOVE_ALL_GROUPS, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR, (c), 0, (d), 0, NULL, (e), (f), (g) )
+#define zclGeneral_SendGroupRemoveAll(a,b,c,d) zclGeneral_SendGroupRemoveWithConfirm( (a), (b), (c), (d), NULL, NULL, 0 )
 
 /*!
  *  Send a Group Add If Identifying Command
  *  Use like:
  *      ZStatus_t zclGeneral_SendGroupAddIfIdentifying( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t groupID, uint8_t *groupName, uint8_t disableDefaultRsp, uint8_t seqNum );
  */
-#define zclGeneral_SendGroupAddIfIdentifying(a,b,c,d,e,f) zclGeneral_SendAddGroupRequestEx( (a), (b), COMMAND_GROUPS_ADD_GROUP_IF_IDENTIFYING, (c), (d), (e), (f), TRUE )
+#define zclGeneral_SendGroupAddIfIdentifyingWithConfirm(a,b,c,d,e,f,g,h,i) zclGeneral_SendAddGroupRequestExWithConfirm( (a), (b), COMMAND_GROUPS_ADD_GROUP_IF_IDENTIFYING, (c), (d), (e), (f), TRUE, (g), (h), (i) )
+#define zclGeneral_SendGroupAddIfIdentifying(a,b,c,d,e,f) zclGeneral_SendGroupAddIfIdentifyingWithConfirm( (a), (b), (c), (d), (e), (f), NULL, NULL, 0 )
 
 /*!
  *  Send a Group Add Response Command
@@ -2507,49 +2523,56 @@ typedef struct
  *  Use like:
  *      ZStatus_t zclGeneral_SendAddScene( uint8_t srcEP, afAddrType_t *dstAddr, zclGeneral_Scene_t *scene, uint8_t disableDefaultRsp, uint8_t seqNum )
  */
-#define zclGeneral_SendAddScene(a,b,c,d,e) zclGeneral_SendAddSceneRequest( (a), (b), COMMAND_SCENES_ADD_SCENE, (c), (d), (e) )
+#define zclGeneral_SendAddSceneWithConfirm(a,b,c,d,e,f,g,h) zclGeneral_SendAddSceneRequestWithConfirm( (a), (b), COMMAND_SCENES_ADD_SCENE, (c), (d), (e), (f), (g), (h) )
+#define zclGeneral_SendAddScene(a,b,c,d,e) zclGeneral_SendAddSceneWithConfirm( (a), (b), (c), (d), (e), NULL, NULL, 0 )
 
 /*!
  *  Send a Scene View Command
  *  Use like:
  *      ZStatus_t zclGeneral_SendSceneView( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t groupID, uint8_t sceneID, uint8_t disableDefaultRsp, uint8_t seqNum );
  */
-#define zclGeneral_SendSceneView(a,b,c,d,e,f) zclGeneral_SendSceneRequest( (a), (b), COMMAND_SCENES_VIEW_SCENE, (c), (d), (e), (f) )
+#define zclGeneral_SendSceneViewWithConfirm(a,b,c,d,e,f,g,h,i) zclGeneral_SendSceneRequestWithConfirm( (a), (b), COMMAND_SCENES_VIEW_SCENE, (c), (d), (e), (f), (g), (h), (i) )
+#define zclGeneral_SendSceneView(a,b,c,d,e,f) zclGeneral_SendSceneViewWithConfirm( (a), (b), (c), (d), (e), (f), NULL, NULL, 0 )
 
 /*!
  *  Send a Scene Remove Command
  *  Use like:
  *      ZStatus_t zclGeneral_SendSceneRemove( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t groupID, uint8_t sceneID, uint8_t disableDefaultRsp, uint8_t seqNum );
  */
-#define zclGeneral_SendSceneRemove(a,b,c,d,e,f) zclGeneral_SendSceneRequest( (a), (b), COMMAND_SCENES_REMOVE_SCENE, (c), (d), (e), (f) )
+#define zclGeneral_SendSceneRemoveWithConfirm(a,b,c,d,e,f,g,h,i) zclGeneral_SendSceneRequestWithConfirm( (a), (b), COMMAND_SCENES_REMOVE_SCENE, (c), (d), (e), (f), (g), (h), (i) )
+#define zclGeneral_SendSceneRemove(a,b,c,d,e,f) zclGeneral_SendSceneRemoveWithConfirm( (a), (b), (c), (d), (e), (f), NULL, NULL, 0 )
 
 /*!
  *  Send a Scene Store Command
  *  Use like:
  *      ZStatus_t zclGeneral_SendSceneStore( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t groupID, uint8_t sceneID, uint8_t disableDefaultRsp, uint8_t seqNum );
  */
-#define zclGeneral_SendSceneStore(a,b,c,d,e,f) zclGeneral_SendSceneRequest( (a), (b), COMMAND_SCENES_STORE_SCENE, (c), (d), (e), (f) )
+#define zclGeneral_SendSceneStoreWithConfirm(a,b,c,d,e,f,g,h,i) zclGeneral_SendSceneRequestWithConfirm( (a), (b), COMMAND_SCENES_STORE_SCENE, (c), (d), (e), (f), (g), (h), (i) )
+#define zclGeneral_SendSceneStore(a,b,c,d,e,f) zclGeneral_SendSceneRequestWithConfirm( (a), (b), (c), (d), (e), (f), NULL, NULL, 0 )
 
 /*!
  *  Send a Scene Recall Command
  *  Use like:
  *      ZStatus_t zclGeneral_SendSceneRecall( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t groupID, uint8_t sceneID, uint8_t disableDefaultRsp, uint8_t seqNum );
  */
-#define zclGeneral_SendSceneRecall(a,b,c,d,e,f) zclGeneral_SendSceneRequest( (a), (b), COMMAND_SCENES_RECALL_SCENE, (c), (d), (e), (f) )
+#define zclGeneral_SendSceneRecallWithConfirm(a,b,c,d,e,f,g,h,i) zclGeneral_SendSceneRequestWithConfirm( (a), (b), COMMAND_SCENES_RECALL_SCENE, (c), (d), (e), (f), (g), (h), (i) )
+#define zclGeneral_SendSceneRecall(a,b,c,d,e,f) zclGeneral_SendSceneRecallWithConfirm( (a), (b), (c), (d), (e), (f), NULL, NULL, 0 )
 
 /*!
  *  Send a Scene Remove ALL Command - COMMAND_SCENES_REMOVE_ALL_SCENES
  *  Use like:
  *      ZStatus_t zclGeneral_SendSceneRemoveAll( uint16_t srcEP, afAddrType_t *dstAddr, uint16_t groupID, uint8_t disableDefaultRsp, uint8_t seqNum );
  */
-#define zclGeneral_SendSceneRemoveAll(a,b,c,d,e) zclGeneral_SendSceneRequest( (a), (b), COMMAND_SCENES_REMOVE_ALL_SCENES, (c), 0, (d), (e) )
+#define zclGeneral_SendSceneRemoveAllWithConfirm(a,b,c,d,e,f,g,h) zclGeneral_SendSceneRequestWithConfirm( (a), (b), COMMAND_SCENES_REMOVE_ALL_SCENES, (c), 0, (d), (e), (f), (g), (h) )
+#define zclGeneral_SendSceneRemoveAll(a,b,c,d,e) zclGeneral_SendSceneRemoveAllWithConfirm( (a), (b), (c), (d), (e), NULL, NULL, 0 )
 
 /*!
  *  Send a Scene Get Membership Command - COMMAND_SCENES_GET_MEMBERSHIPSHIP
  *  Use like:
  *      ZStatus_t zclGeneral_SendSceneGetMembership( uint16_t srcEP, afAddrType_t *dstAddr, uint16_t groupID, uint8_t disableDefaultRsp, uint8_t seqNum );
  */
-#define zclGeneral_SendSceneGetMembership(a,b,c,d,e) zclGeneral_SendSceneRequest( (a), (b), COMMAND_SCENES_GET_SCENE_MEMBERSHIP, (c), 0, (d), (e) )
+#define zclGeneral_SendSceneGetMembershiplWithConfirm(a,b,c,d,e,f,g,h) zclGeneral_SendSceneRequestWithConfirm( (a), (b), COMMAND_SCENES_GET_SCENE_MEMBERSHIP, (c), 0, (d), (e), (f), (g), (h) )
+#define zclGeneral_SendSceneGetMembership(a,b,c,d,e) zclGeneral_SendSceneGetMembershiplWithConfirm( (a), (b), (c), (d), (e), NULL, NULL, 0 )
 
 /*!
  *  Send a Scene Add Response Command - COMMAND_SCENES_ADD_SCENE_RESPONSE
@@ -2592,7 +2615,8 @@ typedef struct
  *  Use like:
  *      ZStatus_t zclGeneral_SendEnhancedAddScene( uint8_t srcEP, afAddrType_t *dstAddr, zclGeneral_Scene_t *scene, uint8_t disableDefaultRsp, uint8_t seqNum )
  */
-#define zclGeneral_SendEnhancedAddScene(a,b,c,d,e) zclGeneral_SendAddSceneRequest( (a), (b), COMMAND_SCENES_ENHANCED_ADD_SCENE, (c), (d), (e) )
+#define zclGeneral_SendEnhancedAddSceneWithConfirm(a,b,c,d,e,f,g,h) zclGeneral_SendAddSceneRequestWithConfirm( (a), (b), COMMAND_SCENES_ENHANCED_ADD_SCENE, (c), (d), (e), (f), (g), (h) )
+#define zclGeneral_SendEnhancedAddScene(a,b,c,d,e) zclGeneral_SendEnhancedAddSceneWithConfirm( (a), (b), (c), (d), (e), NULL, NULL, 0 )
 
 /*!
  *  Send a Scene Enahnced View Command
@@ -2623,21 +2647,24 @@ typedef struct
  *  Use like:
  *      ZStatus_t zclGeneral_SendOnOff_CmdOff( uint16_t srcEP, afAddrType_t *dstAddr, uint8_t disableDefaultRsp, uint8_t seqNum );
  */
-#define zclGeneral_SendOnOff_CmdOff(a,b,c,d) zcl_SendCommand( (a), (b), ZCL_CLUSTER_ID_GENERAL_ON_OFF, COMMAND_ON_OFF_OFF, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR, (c), 0, (d), 0, NULL )
+#define zclGeneral_SendOnOff_CmdOffWithConfirm(a,b,c,d,e,f,g) zcl_SendCommandWithConfirm( (a), (b), ZCL_CLUSTER_ID_GENERAL_ON_OFF, COMMAND_ON_OFF_OFF, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR, (c), 0, (d), 0, NULL, (e), (f), (g) )
+#define zclGeneral_SendOnOff_CmdOff(a,b,c,d) zclGeneral_SendOnOff_CmdOffWithConfirm( (a), (b), (c), (d), NULL, NULL, 0 )
 
 /*!
  *  Send an On Off Command - COMMAND_ONOFF_ON
  *  Use like:
  *      ZStatus_t zclGeneral_SendOnOff_CmdOn( uint16_t srcEP, afAddrType_t *dstAddr, uint8_t disableDefaultRsp, uint8_t seqNum );
  */
-#define zclGeneral_SendOnOff_CmdOn(a,b,c,d) zcl_SendCommand( (a), (b), ZCL_CLUSTER_ID_GENERAL_ON_OFF, COMMAND_ON_OFF_ON, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR, (c), 0, (d), 0, NULL )
+#define zclGeneral_SendOnOff_CmdOnWithConfirm(a,b,c,d,e,f,g) zcl_SendCommandWithConfirm( (a), (b), ZCL_CLUSTER_ID_GENERAL_ON_OFF, COMMAND_ON_OFF_ON, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR, (c), 0, (d), 0, NULL, (e), (f), (g) )
+#define zclGeneral_SendOnOff_CmdOn(a,b,c,d) zclGeneral_SendOnOff_CmdOnWithConfirm( (a), (b), (c), (d), NULL, NULL, 0 )
 
 /*!
  *  Send an On Off Command - COMMAND_ONOFF_TOGGLE
  *  Use like:
  *      ZStatus_t zclGeneral_SendOnOff_CmdToggle( uint16_t srcEP, afAddrType_t *dstAddr, uint8_t disableDefaultRsp, uint8_t seqNum );
  */
-#define zclGeneral_SendOnOff_CmdToggle(a,b,c,d) zcl_SendCommand( (a), (b), ZCL_CLUSTER_ID_GENERAL_ON_OFF, COMMAND_ON_OFF_TOGGLE, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR, (c), 0, (d), 0, NULL )
+#define zclGeneral_SendOnOff_CmdToggleWithConfirm(a,b,c,d,e,f,g) zcl_SendCommandWithConfirm( (a), (b), ZCL_CLUSTER_ID_GENERAL_ON_OFF, COMMAND_ON_OFF_TOGGLE, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR, (c), 0, (d), 0, NULL, (e), (f), (g) )
+#define zclGeneral_SendOnOff_CmdToggle(a,b,c,d) zclGeneral_SendOnOff_CmdToggleWithConfirm( (a), (b), (c), (d), NULL, NULL, 0 )
 
 #ifdef ZCL_LIGHT_LINK_ENHANCE
 /*!
@@ -2645,7 +2672,8 @@ typedef struct
  *  Use like:
  *      ZStatus_t zclGeneral_SendOnOff_CmdOnWithRecallGlobalScene( uint16_t srcEP, afAddrType_t *dstAddr, uint8_t disableDefaultRsp, uint8_t seqNum );
  */
-#define zclGeneral_SendOnOff_CmdOnWithRecallGlobalScene(a,b,c,d) zcl_SendCommand( (a), (b), ZCL_CLUSTER_ID_GENERAL_ON_OFF, COMMAND_ON_OFF_ON_WITH_RECALL_GLOBAL_SCENE, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR, (c), 0, (d), 0, NULL )
+#define zclGeneral_SendOnOff_CmdOnWithRecallGlobalSceneWithConfirm(a,b,c,d,e,f,g) zcl_SendCommandWithConfirm( (a), (b), ZCL_CLUSTER_ID_GENERAL_ON_OFF, COMMAND_ON_OFF_ON_WITH_RECALL_GLOBAL_SCENE, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR, (c), 0, (d), 0, NULL, (e), (f), (g) )
+#define zclGeneral_SendOnOff_CmdOnWithRecallGlobalScene(a,b,c,d) zclGeneral_SendOnOff_CmdOnWithRecallGlobalSceneWithConfirm( (a), (b), (c), (d), NULL, NULL, NULL )
 #endif // ZCL_LIGHT_LINK_ENHANCE
 #endif // ZCL_ON_OFF
 
@@ -2655,58 +2683,64 @@ typedef struct
  *  Use like:
  *      ZStatus_t zclGeneral_SendLevelControlMoveToLevel( uint16_t srcEP, afAddrType_t *dstAddr, uint8_t level, uint16_t transTime, uint8_t disableDefaultRsp, uint8_t seqNum );
  */
-#define zclGeneral_SendLevelControlMoveToLevel(a,b,c,d,e,f) zclGeneral_SendLevelControlMoveToLevelRequest( (a), (b), COMMAND_LEVEL_MOVE_TO_LEVEL, (c), (d), (e) ,(f) )
+#define zclGeneral_SendLevelControlMoveToLevelWithConfirm(a,b,c,d,e,f,g,h,i) zclGeneral_SendLevelControlMoveToLevelRequestWithConfirm( (a), (b), COMMAND_LEVEL_MOVE_TO_LEVEL, (c), (d), (e) ,(f), (g), (h), (i) )
+#define zclGeneral_SendLevelControlMoveToLevel(a,b,c,d,e,f) zclGeneral_SendLevelControlMoveToLevelWithConfirm( (a), (b), (c), (d), (e) ,(f), NULL, NULL, 0 )
 
 /*!
  * Send a Level Control Move Command - COMMAND_LEVEL_MOVE
  *  Use like:
  *      ZStatus_t zclGeneral_SendLevelControlMoveRequest( uint8_t srcEP, afAddrType_t *dstAddr, uint8_t moveMode, uint8_t rate, uint8_t disableDefaultRsp, uint8_t seqNum )
  */
-#define zclGeneral_SendLevelControlMove(a,b,c,d,e,f) zclGeneral_SendLevelControlMoveRequest( (a), (b), COMMAND_LEVEL_MOVE, (c), (d), (e), (f) )
-
+#define zclGeneral_SendLevelControlMoveWithConfirm(a,b,c,d,e,f,g,h,i) zclGeneral_SendLevelControlMoveRequestWithConfirm( (a), (b), COMMAND_LEVEL_MOVE, (c), (d), (e), (f), (g), (h), (i) )
+#define zclGeneral_SendLevelControlMove(a,b,c,d,e,f) zclGeneral_SendLevelControlMoveWithConfirm( (a), (b), (c), (d), (e), (f), NULL, NULL, 0 )
 
 /*!
  * Send out a Level Control Step Command - COMMAND_LEVEL_STEP
  *  Use like:
  *      ZStatus_t zclGeneral_SendLevelControlStep( uint8_t srcEP, afAddrType_t *dstAddr, uint8_t stepMode, uint8_t stepSize, uint16_t transTime, uint8_t disableDefaultRsp, uint8_t seqNum );
  */
-#define zclGeneral_SendLevelControlStep(a,b,c,d,e,f,g) zclGeneral_SendLevelControlStepRequest( (a), (b), COMMAND_LEVEL_STEP, (c), (d), (e), (f), (g) )
+#define zclGeneral_SendLevelControlStepWithConfirm(a,b,c,d,e,f,g,h,i,j) zclGeneral_SendLevelControlStepRequestWithConfirm( (a), (b), COMMAND_LEVEL_STEP, (c), (d), (e), (f), (g), (h), (i), (j) )
+#define zclGeneral_SendLevelControlStep(a,b,c,d,e,f,g) zclGeneral_SendLevelControlStepWithConfirm( (a), (b), (c), (d), (e), (f), (g), NULL, NULL, 0 )
 
 /*!
  * Send out a Level Control Stop Command - COMMAND_LEVEL_STOP
  *  Use like:
  *      ZStatus_t zclGeneral_SendLevelControlStop( uint8_t srcEP, afAddrType_t *dstAddr, uint8_t disableDefaultRsp, uint8_t seqNum );
  */
-#define zclGeneral_SendLevelControlStop(a,b,c,d) zcl_SendCommand( (a), (b), ZCL_CLUSTER_ID_GENERAL_LEVEL_CONTROL, COMMAND_LEVEL_STOP, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR, (c), 0, (d), 0, NULL )
+#define zclGeneral_SendLevelControlStopWithConfirm(a,b,c,d,e,f,g) zcl_SendCommandWithConfirm( (a), (b), ZCL_CLUSTER_ID_GENERAL_LEVEL_CONTROL, COMMAND_LEVEL_STOP, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR, (c), 0, (d), 0, NULL, (e), (f), (g) )
+#define zclGeneral_SendLevelControlStop(a,b,c,d) zclGeneral_SendLevelControlStopWithConfirm( (a), (b), (c), (d), NULL, NULL, 0 )
 
 /*!
  *  Send a Level Control Move to Level with On/Off Command - COMMAND_LEVEL_MOVE_TO_LEVEL_WITH_ON_OFF
  *  Use like:
  *      ZStatus_t zclGeneral_SendLevelControlMoveToLevelWithOnOff( uint16_t srcEP, afAddrType_t *dstAddr, uint8_t level, uint16_t transTime, uint8_t disableDefaultRsp, uint8_t seqNum );
  */
-#define zclGeneral_SendLevelControlMoveToLevelWithOnOff(a,b,c,d,e,f) zclGeneral_SendLevelControlMoveToLevelRequest( (a), (b), COMMAND_LEVEL_MOVE_TO_LEVEL_WITH_ON_OFF, (c), (d), (e) ,(f) )
+#define zclGeneral_SendLevelControlMoveToLevelWithOnOffWithConfirm(a,b,c,d,e,f,g,h,i) zclGeneral_SendLevelControlMoveToLevelRequestWithConfirm( (a), (b), COMMAND_LEVEL_MOVE_TO_LEVEL_WITH_ON_OFF, (c), (d), (e) ,(f), (g), (h), (i) )
+#define zclGeneral_SendLevelControlMoveToLevelWithOnOff(a,b,c,d,e,f) zclGeneral_SendLevelControlMoveToLevelWithOnOffWithConfirm( (a), (b), (c), (d), (e) ,(f), NULL, NULL, 0 )
 
 /*!
  * Send a Level Control Move with On/Off Command - COMMAND_LEVEL_MOVE_WITH_ON_OFF
  *  Use like:
  *      ZStatus_t zclGeneral_SendLevelControlMoveWithOnOff( uint8_t srcEP, afAddrType_t *dstAddr, uint8_t moveMode, uint8_t rate, uint8_t disableDefaultRsp, uint8_t seqNum )
  */
-#define zclGeneral_SendLevelControlMoveWithOnOff(a,b,c,d,e,f) zclGeneral_SendLevelControlMoveRequest( (a), (b), COMMAND_LEVEL_MOVE_WITH_ON_OFF, (c), (d), (e), (f) )
-
+#define zclGeneral_SendLevelControlMoveWithOnOffWithConfirm(a,b,c,d,e,f,g,h,i) zclGeneral_SendLevelControlMoveRequestWithConfirm( (a), (b), COMMAND_LEVEL_MOVE_WITH_ON_OFF, (c), (d), (e), (f), (g), (h), (i) )
+#define zclGeneral_SendLevelControlMoveWithOnOff(a,b,c,d,e,f) zclGeneral_SendLevelControlMoveWithOnOffWithConfirm( (a), (b), (c), (d), (e), (f), NULL, NULL, 0 )
 
 /*!
  * Send out a Level Control Step with On/Off Command - COMMAND_LEVEL_STEP_WITH_ON_OFF
  *  Use like:
  *      ZStatus_t zclGeneral_SendLevelControlStepWithOnOff( uint8_t srcEP, afAddrType_t *dstAddr, uint8_t stepMode, uint8_t stepSize, uint16_t transTime, uint8_t disableDefaultRsp, uint8_t seqNum );
  */
-#define zclGeneral_SendLevelControlStepWithOnOff(a,b,c,d,e,f,g) zclGeneral_SendLevelControlStepRequest( (a), (b), COMMAND_LEVEL_STEP_WITH_ON_OFF, (c), (d), (e), (f), (g) )
+#define zclGeneral_SendLevelControlStepWithOnOffWithConfirm(a,b,c,d,e,f,g,h,i,j) zclGeneral_SendLevelControlStepRequestWithConfirm( (a), (b), COMMAND_LEVEL_STEP_WITH_ON_OFF, (c), (d), (e), (f), (g), (h), (i), (j) )
+#define zclGeneral_SendLevelControlStepWithOnOff(a,b,c,d,e,f,g) zclGeneral_SendLevelControlStepWithOnOffWithConfirm( (a), (b), (c), (d), (e), (f), (g), NULL, NULL, 0 )
 
 /*!
  * Send out a Level Control Stop with On/Off Command - COMMAND_LEVEL_STOP_WITH_ON_OFF
  *  Use like:
  *      ZStatus_t zclGeneral_SendLevelControlStopWithOnOff( uint8_t srcEP, afAddrType_t *dstAddr, uint8_t disableDefaultRsp, uint8_t seqNum );
  */
-#define zclGeneral_SendLevelControlStopWithOnOff(a,b,c,d) zcl_SendCommand( (a), (b), ZCL_CLUSTER_ID_GENERAL_LEVEL_CONTROL, COMMAND_LEVEL_STOP_WITH_ON_OFF, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR, (c), 0, (d), 0, NULL )
+#define zclGeneral_SendLevelControlStopWithOnOffWithConfirm(a,b,c,d,e,f,g) zcl_SendCommandWithConfirm( (a), (b), ZCL_CLUSTER_ID_GENERAL_LEVEL_CONTROL, COMMAND_LEVEL_STOP_WITH_ON_OFF, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR, (c), 0, (d), 0, NULL, (e), (f), (g) )
+#define zclGeneral_SendLevelControlStopWithOnOff(a,b,c,d) zclGeneral_SendLevelControlStopWithOnOffWithConfirm( (a), (b), (c), (d), NULL, NULL, 0 )
 #endif // ZCL_LEVEL_CTRL
 
 #ifdef ZCL_ALARMS
@@ -2715,22 +2749,24 @@ typedef struct
  *  Use like:
  *      ZStatus_t zclGeneral_SendAlarmResetAll( uint16_t srcEP, afAddrType_t *dstAddr, uint8_t disableDefaultRsp, uint8_t seqNum );
  */
-#define zclGeneral_SendAlarmResetAll(a,b,c,d) zcl_SendCommand( (a), (b), ZCL_CLUSTER_ID_GENERAL_ALARMS, COMMAND_ALARMS_RESET_ALL_ALARMS, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR, (c), 0, (d), 0, NULL )
-
+#define zclGeneral_SendAlarmResetAllWithConfirm(a,b,c,d,e,f,g) zcl_SendCommandWithConfirm( (a), (b), ZCL_CLUSTER_ID_GENERAL_ALARMS, COMMAND_ALARMS_RESET_ALL_ALARMS, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR, (c), 0, (d), 0, NULL, (e), (f), (g) )
+#define zclGeneral_SendAlarmResetAll(a,b,c,d) zclGeneral_SendAlarmResetAllWithConfirm( (a), (b), (c), (d), NULL, NULL, 0 )
 
 /*!
  *  Send an Alarm Get Command - COMMAND_ALARMS_GET_ALARM
  *  Use like:
  *      ZStatus_t zclGeneral_SendAlarmGet uint16_t srcEP, afAddrType_t *dstAddr, uint8_t disableDefaultRsp, uint8_t seqNum );
  */
-#define zclGeneral_SendAlarmGet(a,b,c,d) zcl_SendCommand( (a), (b), ZCL_CLUSTER_ID_GENERAL_ALARMS, COMMAND_ALARMS_GET_ALARM, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR, (c), 0, (d), 0, NULL )
+#define zclGeneral_SendAlarmGetWithConfirm(a,b,c,d,e,f,g) zcl_SendCommandWithConfirm( (a), (b), ZCL_CLUSTER_ID_GENERAL_ALARMS, COMMAND_ALARMS_GET_ALARM, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR, (c), 0, (d), 0, NULL, (e), (f), (g) )
+#define zclGeneral_SendAlarmGet(a,b,c,d) zclGeneral_SendAlarmGetWithConfirm( (a), (b), (c), (d), NULL, NULL, 0 )
 
 /*!
  *  Send an Alarm Reset Log Command - COMMAND_ALARMS_RESET_ALARM_LOG
  *  Use like:
  *      ZStatus_t zclGeneral_SendAlarmResetLog( uint16_t srcEP, afAddrType_t *dstAddr, uint8_t disableDefaultRsp, uint8_t seqNum );
  */
-#define zclGeneral_SendAlarmResetLog(a,b,c,d) zcl_SendCommand( (a), (b), ZCL_CLUSTER_ID_GENERAL_ALARMS, COMMAND_ALARMS_RESET_ALARM_LOG, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR, (c), 0, (d), 0, NULL )
+#define zclGeneral_SendAlarmResetLogWithConfirm(a,b,c,d,e,f,g) zcl_SendCommandWithConfirm( (a), (b), ZCL_CLUSTER_ID_GENERAL_ALARMS, COMMAND_ALARMS_RESET_ALARM_LOG, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR, (c), 0, (d), 0, NULL, (e), (f), (g) )
+#define zclGeneral_SendAlarmResetLog(a,b,c,d) zclGeneral_SendAlarmResetLogWithConfirm( (a), (b), (c), (d), NULL, NULL, 0 )
 #endif // ZCL_ALARMS
 
 #ifdef ZCL_LOCATION
@@ -2739,21 +2775,21 @@ typedef struct
  *  Use like:
  *      ZStatus_t zclGeneral_SendLocationDataResponse( uint16_t srcEP, afAddrType_t *dstAddr, zclLocationDataRsp_t *locData, uint8_t disableDefaultRsp, uint8_t seqNum );
  */
-#define zclGeneral_SendLocationDataResponse(a,b,c,d,e) zclGeneral_SendLocationData( (a), (b), COMMAND_LOCATION_DATA_RSP, ((c)->status), (&((c)->data)), (d), (e) )
+#define zclGeneral_SendLocationDataResponse(a,b,c,d,e) zclGeneral_SendLocationDataWithConfirm( (a), (b), COMMAND_LOCATION_DATA_RSP, ((c)->status), (&((c)->data)), (d), (e), NULL, NULL, 0 )
 
 /*!
  *  Send a Location Data Notification Command - COMMAND_LOCATION_DATA_NOTIFICATION
  *  Use like:
  *      ZStatus_t zclGeneral_SendLocationDataNotif( uint16_t srcEP, afAddrType_t *dstAddr, zclLocationData_t *locData, uint8_t seqNum );
  */
-#define zclGeneral_SendLocationDataNotif(a,b,c,d) zclGeneral_SendLocationData( (a), (b), COMMAND_LOCATION_DATA_NOTIF, 0, (c), (d) )
+#define zclGeneral_SendLocationDataNotifWithConfirm(a,b,c,d,e,f,g) zclGeneral_SendLocationDataWithConfirm( (a), (b), COMMAND_LOCATION_DATA_NOTIF, 0, (c), true, (d), (e), (f), (g) )
 
 /*!
  *  Send a Location Data Compact Notification Command - COMMAND_LOCATION_COMPACT_DATA_NOTIFICATION
  *  Use like:
  *      ZStatus_t zclGeneral_SendLocationDataCompactNotif( uint16_t srcEP, afAddrType_t *dstAddr, zclLocationData_t *locData, uint8_t seqNum );
  */
-#define zclGeneral_SendLocationDataCompactNotif(a,b,c,d) zclGeneral_SendLocationData( (a), (b), COMMAND_LOCATION_DATA_COMPACT_NOTIF, 0, (c), (d) )
+#define zclGeneral_SendLocationDataCompactNotifWithConfirm(a,b,c,d,e,f,g) zclGeneral_SendLocationDataWithConfirm( (a), (b), COMMAND_LOCATION_DATA_COMPACT_NOTIF, 0, (c), true, (d), (e), (f), (g) )
 
 /*!
  *  Send an RSSI Ping Command - COMMAND_LOCATION_RSSI_PING
@@ -2780,9 +2816,11 @@ extern void zclGeneral_RegisterUnsupportCallback( ZStatus_t (*callback)(zclIncom
  *      effectId - fading effect to use when switching light off
  *      effectVariant - which variant of effect to be triggered
  */
-extern ZStatus_t zclGeneral_SendOnOff_CmdOffWithEffect( uint8_t srcEP, afAddrType_t *dstAddr,
+extern ZStatus_t zclGeneral_SendOnOff_CmdOffWithEffectWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr,
                                                         uint8_t effectId, uint8_t effectVariant,
-                                                        uint8_t disableDefaultRsp, uint8_t seqNum );
+                                                        uint8_t disableDefaultRsp, uint8_t seqNum,
+                                                        pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk );
+#define zclGeneral_SendOnOff_CmdOffWithEffect(a,b,c,d,e,f)   zclGeneral_SendOnOff_CmdOffWithEffectWithConfirm(a,b,c,d,e,f,NULL,NULL,0)
 
 /*!
  * Call to send out an On with Timed Off Command
@@ -2790,9 +2828,11 @@ extern ZStatus_t zclGeneral_SendOnOff_CmdOffWithEffect( uint8_t srcEP, afAddrTyp
  *      onTime - the length of time (in 1/10ths second) that the lamp is to remain on, before automatically turning off
  *      offWaitTime - the length of time (in 1/10ths second) that the lamp shall remain off, and guarded to prevent an on command turning the light back on.
  */
-extern ZStatus_t zclGeneral_SendOnOff_CmdOnWithTimedOff ( uint8_t srcEP, afAddrType_t *dstAddr,
+extern ZStatus_t zclGeneral_SendOnOff_CmdOnWithTimedOffWithConfirm ( uint8_t srcEP, afAddrType_t *dstAddr,
                                                           zclOnOffCtrl_t onOffCtrl, uint16_t onTime, uint16_t offWaitTime,
-                                                          uint8_t disableDefaultRsp, uint8_t seqNum );
+                                                          uint8_t disableDefaultRsp, uint8_t seqNum,
+                                                          pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk );
+#define zclGeneral_SendOnOff_CmdOnWithTimedOff(a,b,c,d,e,f,g)   zclGeneral_SendOnOff_CmdOnWithTimedOffWithConfirm(a,b,c,d,e,f,g,NULL,NULL,0)
 #endif // ZCL_ON_OFF
 
 #ifdef ZCL_LEVEL_CTRL
@@ -2802,9 +2842,10 @@ extern ZStatus_t zclGeneral_SendOnOff_CmdOnWithTimedOff ( uint8_t srcEP, afAddrT
  *      level - what level to move to
  *      transitionTime - how long to take to get to the level (in seconds).
  */
-extern ZStatus_t zclGeneral_SendLevelControlMoveToLevelRequest( uint8_t srcEP, afAddrType_t *dstAddr,
+extern ZStatus_t zclGeneral_SendLevelControlMoveToLevelRequestWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr,
                                                                 uint8_t cmd, uint8_t level, uint16_t transTime,
-                                                                uint8_t disableDefaultRsp, uint8_t seqNum );
+                                                                uint8_t disableDefaultRsp, uint8_t seqNum,
+                                                                pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk );
 
 /*!
  * Call to send out a Level Control Move Request
@@ -2813,9 +2854,10 @@ extern ZStatus_t zclGeneral_SendLevelControlMoveToLevelRequest( uint8_t srcEP, a
  *                 LEVEL_MOVE_DOWN
  *      rate - number of steps to take per second
  */
-extern ZStatus_t zclGeneral_SendLevelControlMoveRequest( uint8_t srcEP, afAddrType_t *dstAddr,
+extern ZStatus_t zclGeneral_SendLevelControlMoveRequestWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr,
                                                          uint8_t cmd, uint8_t moveMode, uint8_t rate,
-                                                         uint8_t disableDefaultRsp, uint8_t seqNum );
+                                                         uint8_t disableDefaultRsp, uint8_t seqNum,
+                                                         pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk );
 
 /*!
  * Call to send out a Level Control Step Request
@@ -2825,18 +2867,20 @@ extern ZStatus_t zclGeneral_SendLevelControlMoveRequest( uint8_t srcEP, afAddrTy
  *      amount - number of levels to step
  *      transitionTime - time to take to perform a single step
  */
-extern ZStatus_t zclGeneral_SendLevelControlStepRequest( uint8_t srcEP, afAddrType_t *dstAddr,
+extern ZStatus_t zclGeneral_SendLevelControlStepRequestWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr,
                                                          uint8_t cmd, uint8_t stepMode, uint8_t stepSize, uint16_t transTime,
-                                                         uint8_t disableDefaultRsp, uint8_t seqNum );
+                                                         uint8_t disableDefaultRsp, uint8_t seqNum,
+                                                         pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk );
 
 /*!
  * Call to send out a Level Control Stop Command
  *
  *      this command has no parameters
  */
-extern ZStatus_t zclGeneral_SendLevelControlStopRequest( uint8_t srcEP, afAddrType_t *dstAddr,
+extern ZStatus_t zclGeneral_SendLevelControlStopRequestWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr,
                                                          uint8_t cmd,
-                                                         uint8_t disableDefaultRsp, uint8_t seqNum );
+                                                         uint8_t disableDefaultRsp, uint8_t seqNum,
+                                                         pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk );
 #endif // ZCL_LEVEL_CTRL
 
 #ifdef ZCL_GROUPS
@@ -2859,9 +2903,12 @@ extern ZStatus_t zclGeneral_SendGroupViewResponse( uint8_t srcEP, afAddrType_t *
 /*!
  * Call to send Group Membership Command
  */
-extern ZStatus_t zclGeneral_SendGroupGetMembershipRequest( uint8_t srcEP, afAddrType_t *dstAddr,
+extern ZStatus_t zclGeneral_SendGroupGetMembershipRequestWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr,
                                                            uint8_t cmd, uint8_t rspCmd, uint8_t direction, uint8_t capacity,
-                                                           uint8_t grpCnt, uint16_t *grpList, uint8_t disableDefaultRsp, uint8_t seqNum );
+                                                           uint8_t grpCnt, uint16_t *grpList, uint8_t disableDefaultRsp, uint8_t seqNum,
+                                                           pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk );
+#define zclGeneral_SendGroupGetMembershipRequest(a,b,c,d,e,f,g,h,i,j)  zclGeneral_SendGroupGetMembershipRequestWithConfirm(a,b,c,d,e,f,g,h,i,j,NULL,NULL,0)
+
 #endif // ZCL_GROUPS
 
 #ifdef ZCL_SCENES
@@ -2908,15 +2955,17 @@ extern ZStatus_t zclGeneral_ReadSceneCountCB( uint16_t clusterId, uint16_t attrI
 /*!
  * Send an (Enhanced) Add Scene Request message
  */
-extern ZStatus_t zclGeneral_SendAddSceneRequest( uint8_t srcEP, afAddrType_t *dstAddr,
+extern ZStatus_t zclGeneral_SendAddSceneRequestWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr,
                                                  uint8_t cmd, zclGeneral_Scene_t *scene,
-                                                 uint8_t disableDefaultRsp, uint8_t seqNum );
+                                                 uint8_t disableDefaultRsp, uint8_t seqNum,
+                                                 pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk );
 /*!
  * Send a Scene command (request) - not Scene Add
  */
-extern ZStatus_t zclGeneral_SendSceneRequest( uint8_t srcEP, afAddrType_t *dstAddr,
+extern ZStatus_t zclGeneral_SendSceneRequestWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr,
                                               uint8_t cmd, uint16_t groupID, uint8_t sceneID,
-                                              uint8_t disableDefaultRsp, uint8_t seqNum );
+                                              uint8_t disableDefaultRsp, uint8_t seqNum,
+                                              pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk );
 
 /*!
  * Send Scene response messages for either COMMAND_SCENES_ADD_SCENE_RESPONSE,
@@ -2973,9 +3022,11 @@ extern void zclGeneral_ScenesSave( void );
 /*!
  * Send a Group command (request) - not Group Add or Remove All
  */
-extern ZStatus_t zclGeneral_SendGroupRequest( uint8_t srcEP, afAddrType_t *dstAddr,
+extern ZStatus_t zclGeneral_SendGroupRequestWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr,
                                               uint8_t cmd, uint16_t groupID,
-                                              uint8_t disableDefaultRsp, uint8_t seqNum );
+                                              uint8_t disableDefaultRsp, uint8_t seqNum,
+                                              pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk );
+#define zclGeneral_SendGroupRequest(a,b,c,d,e,f)   zclGeneral_SendGroupRequestWithConfirm(a,b,c,d,e,f,NULL,NULL,0)
 
 /*!
  * Send a Group Add command (request)
@@ -2983,17 +3034,21 @@ extern ZStatus_t zclGeneral_SendGroupRequest( uint8_t srcEP, afAddrType_t *dstAd
  *          string data type, so the first byte is the length of the
  *          name (in bytes), then the name.
  */
-extern ZStatus_t zclGeneral_SendAddGroupRequestEx( uint8_t srcEP, afAddrType_t *dstAddr,
+extern ZStatus_t zclGeneral_SendAddGroupRequestExWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr,
                                                  uint8_t cmd, uint16_t groupID, uint8_t *groupName,
-                                                 uint8_t disableDefaultRsp, uint8_t seqNum, uint8_t isReqFromApp );
+                                                 uint8_t disableDefaultRsp, uint8_t seqNum, uint8_t isReqFromApp,
+                                                 pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk );
+#define zclGeneral_SendAddGroupRequestEx(a,b,c,d,e)   zclGeneral_SendAddGroupRequestExWithConfirm(a,b,c,d,e,NULL,NULL,0)
 #endif // ZCL_GROUPS
 
 #ifdef ZCL_IDENTIFY
 /*!
  * Send a Identify message
  */
-extern ZStatus_t zclGeneral_SendIdentify( uint8_t srcEP, afAddrType_t *dstAddr,
-                                          uint16_t identifyTime, uint8_t disableDefaultRsp, uint8_t seqNum );
+extern ZStatus_t zclGeneral_SendIdentifyWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr,
+                                                    uint16_t identifyTime, uint8_t disableDefaultRsp, uint8_t seqNum,
+                                                    pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk );
+#define zclGeneral_SendIdentify(a,b,c,d,e)   zclGeneral_SendIdentifyWithConfirm(a,b,c,d,e,NULL,NULL,0)
 
 /*!
  * Send a Trigger Effect message
@@ -3013,16 +3068,20 @@ extern ZStatus_t zclGeneral_SendIdentifyQueryResponse( uint8_t srcEP, afAddrType
 /*!
  * Send out an Alarm Command
  */
-extern ZStatus_t zclGeneral_SendAlarm( uint8_t srcEP, afAddrType_t *dstAddr,
+extern ZStatus_t zclGeneral_SendAlarmWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr,
                                        uint8_t alarmCode, uint16_t clusterID,
-                                       uint8_t disableDefaultRsp, uint8_t seqNum );
+                                       uint8_t disableDefaultRsp, uint8_t seqNum,
+                                       pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk );
+#define zclGeneral_SendAlarm(a,b,c,d,e,f)   zclGeneral_SendAlarmWithConfirm(a,b,c,d,e,f,NULL,NULL,0)
 
 /*!
  * Send out an Alarm Reset Command
  */
-extern ZStatus_t zclGeneral_SendAlarmReset( uint8_t srcEP, afAddrType_t *dstAddr,
+extern ZStatus_t zclGeneral_SendAlarmResetWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr,
                                             uint8_t alarmCode, uint16_t clusterID,
-                                            uint8_t disableDefaultRsp, uint8_t seqNum );
+                                            uint8_t disableDefaultRsp, uint8_t seqNum,
+                                            pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk );
+#define zclGeneral_SendAlarmReset(a,b,c,d,e,f)   zclGeneral_SendAlarmResetWithConfirm(a,b,c,d,e,f,NULL,NULL,0)
 
 /*!
  * Send out an Alarm Get Response Command
@@ -3039,38 +3098,48 @@ ZStatus_t zclGeneral_SendAlarmGetEventLog( uint8_t srcEP, afAddrType_t *dstAddr,
 /*!
  * Send out an an Alarm Publish Event Log Command
  */
-extern ZStatus_t zclGeneral_SendAlarmPublishEventLog( uint8_t srcEP, afAddrType_t *dstAddr,
+extern ZStatus_t zclGeneral_SendAlarmPublishEventLogWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr,
                                                       zclPublishEventLog_t *pEventLog,
-                                                      uint8_t disableDefaultRsp, uint8_t seqNum );
+                                                      uint8_t disableDefaultRsp, uint8_t seqNum,
+                                                      pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk );
+#define zclGeneral_SendAlarmPublishEventLog(a,b,c,d,e)   zclGeneral_SendAlarmPublishEventLogWithConfirm(a,b,c,d,e,NULL,NULL,0)
 #endif // ZCL_ALARMS
 
 #ifdef ZCL_LOCATION
 /*!
  * Send a Set Absolute Location message
  */
-extern ZStatus_t zclGeneral_SendLocationSetAbsolute( uint8_t srcEP, afAddrType_t *dstAddr,
+extern ZStatus_t zclGeneral_SendLocationSetAbsoluteWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr,
                                                      zclLocationAbsolute_t *absLoc,
-                                                     uint8_t disableDefaultRsp, uint8_t seqNum );
+                                                     uint8_t disableDefaultRsp, uint8_t seqNum,
+                                                     pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk );
+#define zclGeneral_SendLocationSetAbsolute(a,b,c,d,e)   zclGeneral_SendLocationSetAbsoluteWithConfirm(a,b,c,d,e,NULL,NULL,0)
 
 /*!
  * Send a Set Device Configuration message
  */
-extern ZStatus_t zclGeneral_SendLocationSetDevCfg( uint8_t srcEP, afAddrType_t *dstAddr,
+extern ZStatus_t zclGeneral_SendLocationSetDevCfgWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr,
                                                    zclLocationDevCfg_t *devCfg,
-                                                   uint8_t disableDefaultRsp, uint8_t seqNum );
+                                                   uint8_t disableDefaultRsp, uint8_t seqNum,
+                                                   pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk );
+#define zclGeneral_SendLocationSetDevCfg(a,b,c,d,e)   zclGeneral_SendLocationSetDevCfgWithConfirm(a,b,c,d,e,NULL,NULL,0)
 
 /*!
  * Send a Get Device Configuration message
  */
-extern ZStatus_t zclGeneral_SendLocationGetDevCfg( uint8_t srcEP, afAddrType_t *dstAddr,
-                                                   uint8_t *targetAddr, uint8_t disableDefaultRsp, uint8_t seqNum );
+extern ZStatus_t zclGeneral_SendLocationGetDevCfgWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr,
+                                                   uint8_t *targetAddr, uint8_t disableDefaultRsp, uint8_t seqNum,
+                                                   pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk );
+#define zclGeneral_SendLocationGetDevCfg(a,b,c,d,e)   zclGeneral_SendLocationGetDevCfgWithConfirm(a,b,c,d,e,NULL,NULL,0)
 
 /*!
  * Send a Get Location Data message
  */
-extern ZStatus_t zclGeneral_SendLocationGetData( uint8_t srcEP, afAddrType_t *dstAddr,
+extern ZStatus_t zclGeneral_SendLocationGetDataWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr,
                                                  zclLocationGetData_t *locData,
-                                                 uint8_t disableDefaultRsp, uint8_t seqNum );
+                                                 uint8_t disableDefaultRsp, uint8_t seqNum,
+                                                 pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk );
+#define zclGeneral_SendLocationGetData(a,b,c,d,e)   zclGeneral_SendLocationGetDataWithConfirm(a,b,c,d,e,NULL,NULL,0)
 
 /*!
  * Send a Set Device Configuration Response message
@@ -3083,9 +3152,10 @@ extern ZStatus_t zclGeneral_SendLocationDevCfgResponse( uint8_t srcEP, afAddrTyp
  * Send a Location Data Response, Location Data Notification or Compact Location
  * Data Notification message.
  */
-extern ZStatus_t zclGeneral_SendLocationData( uint8_t srcEP, afAddrType_t *dstAddr, uint8_t cmd,
+extern ZStatus_t zclGeneral_SendLocationDataWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr, uint8_t cmd,
                                               uint8_t status, zclLocationData_t *locData,
-                                              uint8_t disableDefaultRsp, uint8_t seqNum );
+                                              uint8_t disableDefaultRsp, uint8_t seqNum,
+                                              pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk );
 #endif // ZCL_LOCATION
 
 #ifdef ZCL_ALARMS

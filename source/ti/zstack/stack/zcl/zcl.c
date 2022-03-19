@@ -213,7 +213,10 @@ static zclIncoming_t *rawZCLCommand = (zclIncoming_t *)NULL; //fixed by luoyimin
 static zclExternalFoundationHandlerList *externalEndPointHandlerList = (zclExternalFoundationHandlerList *)NULL;
 #endif
 
-//add by luoyiming, fix at 2019-3-15
+/*
+ All ZCL Request command function has added "WithConfirmmode" in 2022-03-19
+ "zclSendExtParam" has been removed
+ 
 struct zclSendExtParam
 {
   halIntState_t cs;
@@ -221,6 +224,7 @@ struct zclSendExtParam
   void* cnfParam;
   uint8_t options;
 }*pZclSendExtParam = NULL;
+*/
 
 /*********************************************************************
  * LOCAL FUNCTIONS
@@ -1199,7 +1203,7 @@ static uint8_t zcl_DeviceOperational( uint8_t srcEP, uint16_t clusterID,
 }
 
 /*********************************************************************
- * @fn      zcl_SendCommand
+ * @fn      zcl_SendCommandExWithConfirm
  *
  * @brief   Used to send Profile and Cluster Specific Command messages.
  *
@@ -1218,13 +1222,16 @@ static uint8_t zcl_DeviceOperational( uint8_t srcEP, uint16_t clusterID,
  * @param   cmdFormatLen - length of the command to be sent
  * @param   cmdFormat - command to be sent
  * @param   isReqFromApp - Indicates where it comes from application thread or stack thread
+ * @param   cnfCB - send confirm callback
+ * @param   cnfParam - parameters of send confirm callback
+ * @param   optMsk - force options setting
  *
  * @return  ZSuccess if OK
  */
-ZStatus_t zcl_SendCommandEx( uint8_t srcEP, afAddrType_t *destAddr,
-                           uint16_t clusterID, uint8_t cmd, uint8_t specific, uint8_t direction,
-                           uint8_t disableDefaultRsp, uint16_t manuCode, uint8_t seqNum,
-                           uint16_t cmdFormatLen, uint8_t *cmdFormat, uint8_t isReqFromApp )
+ZStatus_t zcl_SendCommandExWithConfirm( uint8_t srcEP, afAddrType_t *destAddr, uint16_t clusterID, uint8_t cmd,
+                                        uint8_t specific, uint8_t direction, uint8_t disableDefaultRsp, uint16_t manuCode,
+                                        uint8_t seqNum, uint16_t cmdFormatLen, uint8_t *cmdFormat, uint8_t isReqFromApp,
+                                        pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk )
 {
   endPointDesc_t *epDesc;
   zclFrameHdr_t hdr;
@@ -1233,18 +1240,6 @@ ZStatus_t zcl_SendCommandEx( uint8_t srcEP, afAddrType_t *destAddr,
   uint8_t *pBuf;
   uint8_t options;
   ZStatus_t status;
-
-  //seting send-extParam, add by luoyiming, fix at 2019-3-15
-  pfnAfCnfCB cnfCB = NULL;
-  void* cnfParam = NULL;
-  uint8_t optionsMsk = 0;
-  if ( pZclSendExtParam )
-  {
-    cnfCB = pZclSendExtParam->cnfCB;
-    cnfParam = pZclSendExtParam->cnfParam;
-    optionsMsk = pZclSendExtParam->options;
-    zcl_ClearSendExtParam();
-  }
 
   epDesc = afFindEndPointDesc( srcEP );
   if ( epDesc == NULL )
@@ -1276,7 +1271,7 @@ ZStatus_t zcl_SendCommandEx( uint8_t srcEP, afAddrType_t *destAddr,
     }
   }
   //set zcl send options, add by luoyiming
-  options |= optionsMsk;
+  options |= optMsk;
 
   zcl_memset( &hdr, 0, sizeof( zclFrameHdr_t ) );
 
@@ -1373,68 +1368,9 @@ ZStatus_t zcl_SendCommandEx( uint8_t srcEP, afAddrType_t *destAddr,
   return ( status );
 }
 
-/*********************************************************************
- * @fn      zcl_SetSendExtParam
- *
- * @brief   set the application's callback function for send
- *          command's data confirm,run before every "zcl_SendCommand"
- *
- *          NOTE: 
- *
- * @param   cnfCB - function pointer to data confrim
- * @param   cnfParam - parament for data confrim function
- * @param   options - send options
- *
- * return   TRUE if valid setting, FALSE otherwise
- */
-uint8_t zcl_SetSendExtParam( pfnAfCnfCB cnfCB, void* cnfParam, uint8_t options )
-{
-  halIntState_t cs;
-  HAL_ENTER_CRITICAL_SECTION(cs);
-
-  if ( pZclSendExtParam == NULL )
-  {
-    pZclSendExtParam = zcl_mem_alloc( sizeof(struct zclSendExtParam) );
-    if ( pZclSendExtParam )
-    {
-      pZclSendExtParam->cnfCB = cnfCB;
-      pZclSendExtParam->cnfParam = cnfParam;
-      pZclSendExtParam->options = options;
-      pZclSendExtParam->cs = cs;
-      return TRUE;
-    }
-  }
-
-  HAL_EXIT_CRITICAL_SECTION(cs);
-  return FALSE;
-}
-
-/*********************************************************************
- * @fn      zcl_ClearSendExtParam
- *
- * @brief   clear the application's callback function for send
- *          command's data confirm,run before every "zcl_SendCommand"
- *
- *          NOTE: 
- *
- * @param   NONE 
- */
-void zcl_ClearSendExtParam( void )
-{
-  if ( pZclSendExtParam )
-  {
-    halIntState_t cs = pZclSendExtParam->cs;
-
-    zcl_mem_free( pZclSendExtParam );
-    pZclSendExtParam = NULL;
-
-    HAL_EXIT_CRITICAL_SECTION(cs);
-  }
-}
-
 #ifdef ZCL_READ
 /*********************************************************************
- * @fn      zcl_SendRead
+ * @fn      zcl_SendReadWithConfirm
  *
  * @brief   Send a Read command
  *
@@ -1445,12 +1381,15 @@ void zcl_ClearSendExtParam( void )
  * @param   direction - direction of the command
  * @param   manuCode - manufacturer code for proprietary extensions to a profile
  * @param   seqNum - transaction sequence number
+ * @param   cnfCB - send confirm callback
+ * @param   cnfParam - parameters of send confirm callback
+ * @param   optMsk - force options setting
  *
  * @return  ZSuccess if OK
  */
-ZStatus_t zcl_SendRead( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t clusterID,
-                        zclReadCmd_t *readCmd, uint8_t direction,
-                        uint8_t disableDefaultRsp, uint16_t manuCode, uint8_t seqNum )
+ZStatus_t zcl_SendReadWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t clusterID, zclReadCmd_t *readCmd,
+                                   uint8_t direction, uint8_t disableDefaultRsp, uint16_t manuCode, uint8_t seqNum,
+                                   pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk )
 {
   uint16_t dataLen;
   uint8_t *buf;
@@ -1472,8 +1411,9 @@ ZStatus_t zcl_SendRead( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t clusterID
       *pBuf++ = HI_UINT16( readCmd->attrID[i] );
     }
 
-    status = zcl_SendCommand( srcEP, dstAddr, clusterID, ZCL_CMD_READ, FALSE,
-                              direction, disableDefaultRsp, manuCode, seqNum, dataLen, buf );
+    status = zcl_SendCommandWithConfirm( srcEP, dstAddr, clusterID, ZCL_CMD_READ, FALSE, direction,
+                                        disableDefaultRsp, manuCode, seqNum, dataLen, buf,
+                                        cnfCB, cnfParam, optMsk );
     zcl_mem_free( buf );
   }
   else
@@ -1586,7 +1526,7 @@ ZStatus_t zcl_SendReadRsp( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t cluste
 
 #ifdef ZCL_WRITE
 /*********************************************************************
- * @fn      sendWriteRequest
+ * @fn      zcl_SendWriteRequestWithConfirm
  *
  * @brief   Send a Write command
  *
@@ -1597,12 +1537,16 @@ ZStatus_t zcl_SendReadRsp( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t cluste
  * @param   direction - direction of the command
  * @param   manuCode - manufacturer code for proprietary extensions to a profile
  * @param   seqNum - transaction sequence number
+ * @param   cnfCB - send confirm callback
+ * @param   cnfParam - parameters of send confirm callback
+ * @param   optMsk - force options setting
  *
  * @return  ZSuccess if OK
  */
-ZStatus_t zcl_SendWriteRequest( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t clusterID,
-                                zclWriteCmd_t *writeCmd, uint8_t cmd, uint8_t direction,
-                                uint8_t disableDefaultRsp, uint16_t manuCode, uint8_t seqNum )
+ZStatus_t zcl_SendWriteRequestWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t clusterID,
+                                          zclWriteCmd_t *writeCmd, uint8_t cmd, uint8_t direction,
+                                          uint8_t disableDefaultRsp, uint16_t manuCode, uint8_t seqNum,
+                                          pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk )
 {
   uint8_t *buf;
   uint16_t dataLen = 0;
@@ -1635,8 +1579,9 @@ ZStatus_t zcl_SendWriteRequest( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t c
       pBuf = zclSerializeData( statusRec->dataType, statusRec->attrData, pBuf );
     }
 
-    status = zcl_SendCommand( srcEP, dstAddr, clusterID, cmd, FALSE,
-                              direction, disableDefaultRsp, manuCode, seqNum, dataLen, buf );
+    status = zcl_SendCommandWithConfirm( srcEP, dstAddr, clusterID, cmd, FALSE, direction,
+                                        disableDefaultRsp, manuCode, seqNum, dataLen, buf,
+                                        cnfCB, cnfParam, optMsk );
     zcl_mem_free( buf );
   }
   else
@@ -1706,7 +1651,7 @@ ZStatus_t zcl_SendWriteRsp( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t clust
 
 #ifdef ZCL_REPORT_CONFIGURING_DEVICE
 /*********************************************************************
- * @fn      zcl_SendConfigReportCmd
+ * @fn      zcl_SendConfigReportCmdWithConfirm
  *
  * @brief   Send a Configure Reporting command
  *
@@ -1716,12 +1661,16 @@ ZStatus_t zcl_SendWriteRsp( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t clust
  * @param   direction - direction of the command
  * @param   manuCode - manufacturer code for proprietary extensions to a profile
  * @param   seqNum - transaction sequence number
+ * @param   cnfCB - send confirm callback
+ * @param   cnfParam - parameters of send confirm callback
+ * @param   optMsk - force options setting
  *
  * @return  ZSuccess if OK
  */
-ZStatus_t zcl_SendConfigReportCmd( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t clusterID,
-                                   zclCfgReportCmd_t *cfgReportCmd, uint8_t direction,
-                                   uint8_t disableDefaultRsp, uint16_t manuCode, uint8_t seqNum )
+ZStatus_t zcl_SendConfigReportCmdWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t clusterID,
+                                              zclCfgReportCmd_t *cfgReportCmd, uint8_t direction,
+                                              uint8_t disableDefaultRsp, uint16_t manuCode, uint8_t seqNum,
+                                              pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk )
 {
   uint8_t *buf;
   uint16_t dataLen = 0;
@@ -1785,8 +1734,9 @@ ZStatus_t zcl_SendConfigReportCmd( uint8_t srcEP, afAddrType_t *dstAddr, uint16_
       }
     } // for loop
 
-    status = zcl_SendCommand( srcEP, dstAddr, clusterID, ZCL_CMD_CONFIG_REPORT, FALSE,
-                              direction, disableDefaultRsp, manuCode, seqNum, dataLen, buf );
+    status = zcl_SendCommandWithConfirm( srcEP, dstAddr, clusterID, ZCL_CMD_CONFIG_REPORT, FALSE,
+                                        direction, disableDefaultRsp, manuCode, seqNum, dataLen, buf,
+                                        cnfCB, cnfParam, optMsk );
     zcl_mem_free( buf );
   }
   else
@@ -1873,7 +1823,7 @@ ZStatus_t zcl_SendConfigReportRspCmdEx( uint8_t srcEP, afAddrType_t *dstAddr, ui
 
 #ifdef ZCL_REPORT_CONFIGURING_DEVICE
 /*********************************************************************
- * @fn      zcl_SendReadReportCfgCmd
+ * @fn      zcl_SendReadReportCfgCmdWithConfirm
  *
  * @brief   Send a Read Reporting Configuration command
  *
@@ -1883,12 +1833,16 @@ ZStatus_t zcl_SendConfigReportRspCmdEx( uint8_t srcEP, afAddrType_t *dstAddr, ui
  * @param   direction - direction of the command
  * @param   manuCode - manufacturer code for proprietary extensions to a profile
  * @param   seqNum - transaction sequence number
+ * @param   cnfCB - send confirm callback
+ * @param   cnfParam - parameters of send confirm callback
+ * @param   optMsk - force options setting
  *
  * @return  ZSuccess if OK
  */
-ZStatus_t zcl_SendReadReportCfgCmd( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t clusterID,
-                                    zclReadReportCfgCmd_t *readReportCfgCmd, uint8_t direction,
-                                    uint8_t disableDefaultRsp, uint16_t manuCode, uint8_t seqNum )
+ZStatus_t zcl_SendReadReportCfgCmdWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t clusterID,
+                                              zclReadReportCfgCmd_t *readReportCfgCmd, uint8_t direction,
+                                              uint8_t disableDefaultRsp, uint16_t manuCode, uint8_t seqNum,
+                                              pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk )
 {
   uint16_t dataLen;
   uint8_t *buf;
@@ -1910,8 +1864,9 @@ ZStatus_t zcl_SendReadReportCfgCmd( uint8_t srcEP, afAddrType_t *dstAddr, uint16
       *pBuf++ = HI_UINT16( readReportCfgCmd->attrList[i].attrID );
     }
 
-    status = zcl_SendCommand( srcEP, dstAddr, clusterID, ZCL_CMD_READ_REPORT_CFG, FALSE,
-                              direction, disableDefaultRsp, manuCode, seqNum, dataLen, buf );
+    status = zcl_SendCommandWithConfirm( srcEP, dstAddr, clusterID, ZCL_CMD_READ_REPORT_CFG, FALSE,
+                                        direction, disableDefaultRsp, manuCode, seqNum, dataLen, buf,
+                                        cnfCB, cnfParam, optMsk );
     zcl_mem_free( buf );
   }
   else
@@ -2037,7 +1992,7 @@ ZStatus_t zcl_SendReadReportCfgRspCmdEx( uint8_t srcEP, afAddrType_t *dstAddr, u
 }
 
 /*********************************************************************
- * @fn      zcl_SendReportCmdEx
+ * @fn      zcl_SendReportCmdExWithConfirm
  *
  * @brief   Send a Report command
  *
@@ -2048,12 +2003,16 @@ ZStatus_t zcl_SendReadReportCfgRspCmdEx( uint8_t srcEP, afAddrType_t *dstAddr, u
  * @param   manuCode - manufacturer code for proprietary extensions to a profile
  * @param   seqNum - transaction sequence number
  * @param   isReqFromApp - Indicates where it comes from application thread or stack thread
+ * @param   cnfCB - send confirm callback
+ * @param   cnfParam - parameters of send confirm callback
+ * @param   optMsk - force options setting
  *
  * @return  ZSuccess if OK
  */
-ZStatus_t zcl_SendReportCmdEx( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t clusterID,
-                              zclReportCmd_t *reportCmd, uint8_t direction, uint8_t disableDefaultRsp,
-                              uint16_t manuCode, uint8_t seqNum, uint8_t isReqFromApp)
+ZStatus_t zcl_SendReportCmdExWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t clusterID,
+                                         zclReportCmd_t *reportCmd, uint8_t direction, uint8_t disableDefaultRsp,
+                                         uint16_t manuCode, uint8_t seqNum, uint8_t isReqFromApp,
+                                         pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk )
 {
   uint16_t dataLen = 0;
   uint8_t *buf;
@@ -2089,13 +2048,15 @@ ZStatus_t zcl_SendReportCmdEx( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t cl
     }
     if(isReqFromApp)
     {
-      status = zcl_SendCommand( srcEP, dstAddr, clusterID, ZCL_CMD_REPORT, FALSE,
-                                direction, disableDefaultRsp, manuCode, seqNum, dataLen, buf );
+      status = zcl_SendCommandWithConfirm( srcEP, dstAddr, clusterID, ZCL_CMD_REPORT, FALSE,
+                                          direction, disableDefaultRsp, manuCode, seqNum, dataLen, buf,
+                                          cnfCB, cnfParam, optMsk );
     }
     else
     {
-      status = zcl_StackSendCommand( srcEP, dstAddr, clusterID, ZCL_CMD_REPORT, FALSE,
-                                direction, disableDefaultRsp, manuCode, seqNum, dataLen, buf );
+      status = zcl_StackSendCommandWithConfirm( srcEP, dstAddr, clusterID, ZCL_CMD_REPORT, FALSE,
+                                               direction, disableDefaultRsp, manuCode, seqNum, dataLen, buf,
+                                               cnfCB, cnfParam, optMsk );
     }
     zcl_mem_free( buf );
   }
@@ -2142,7 +2103,7 @@ ZStatus_t zcl_SendDefaultRspCmd( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t 
 
 #ifdef ZCL_DISCOVER
 /*********************************************************************
- * @fn      zcl_SendDiscoverCmdsCmd
+ * @fn      zcl_SendDiscoverCmdsCmdWithConfirm
  *
  * @brief   Send a Discover Commands command
  *
@@ -2153,12 +2114,16 @@ ZStatus_t zcl_SendDefaultRspCmd( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t 
  * @param   direction - direction of the command
  * @param   manuCode - manufacturer code for proprietary extensions to a profile
  * @param   seqNum - transaction sequence number
+ * @param   cnfCB - send confirm callback
+ * @param   cnfParam - parameters of send confirm callback
+ * @param   optMsk - force options setting
  *
  * @return  ZSuccess if OK
  */
-ZStatus_t zcl_SendDiscoverCmdsCmd( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t clusterID,
-                                  uint8_t cmdType, zclDiscoverCmdsCmd_t *pDiscoverCmd,
-                                  uint8_t direction, uint8_t disableDefaultRsp, uint16_t manuCode, uint8_t seqNum )
+ZStatus_t zcl_SendDiscoverCmdsCmdWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t clusterID,
+                                             uint8_t cmdType, zclDiscoverCmdsCmd_t *pDiscoverCmd,
+                                             uint8_t direction, uint8_t disableDefaultRsp, uint16_t manuCode, uint8_t seqNum,
+                                             pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk )
 {
   uint8_t payload[2]; // size of startCmdID and maxCmdID
   ZStatus_t status;
@@ -2169,13 +2134,15 @@ ZStatus_t zcl_SendDiscoverCmdsCmd( uint8_t srcEP, afAddrType_t *dstAddr, uint16_
   // Send message for either commands received or generated
   if ( cmdType == ZCL_CMD_DISCOVER_CMDS_RECEIVED )
   {
-    status = zcl_SendCommand( srcEP, dstAddr, clusterID, ZCL_CMD_DISCOVER_CMDS_RECEIVED, FALSE,
-                                direction, disableDefaultRsp, manuCode, seqNum, sizeof(payload), payload );
+    status = zcl_SendCommandWithConfirm( srcEP, dstAddr, clusterID, ZCL_CMD_DISCOVER_CMDS_RECEIVED, FALSE,
+                                        direction, disableDefaultRsp, manuCode, seqNum, sizeof(payload), payload,
+                                        cnfCB, cnfParam, optMsk );
   }
   else  // generated
   {
-    status = zcl_SendCommand( srcEP, dstAddr, clusterID, ZCL_CMD_DISCOVER_CMDS_GEN, FALSE,
-                                direction, disableDefaultRsp, manuCode, seqNum, sizeof(payload), payload );
+    status = zcl_SendCommandWithConfirm( srcEP, dstAddr, clusterID, ZCL_CMD_DISCOVER_CMDS_GEN, FALSE,
+                                        direction, disableDefaultRsp, manuCode, seqNum, sizeof(payload), payload,
+                                        cnfCB, cnfParam, optMsk );
   }
 
   return ( status );
@@ -2240,7 +2207,7 @@ ZStatus_t zcl_SendDiscoverCmdsRspCmd( uint8_t srcEP, afAddrType_t *dstAddr, uint
 }
 
 /*********************************************************************
- * @fn      zcl_SendDiscoverAttrsCmd
+ * @fn      zcl_SendDiscoverAttrsCmdWithConfirm
  *
  * @brief   Send a Discover Attributes command
  *
@@ -2250,12 +2217,16 @@ ZStatus_t zcl_SendDiscoverCmdsRspCmd( uint8_t srcEP, afAddrType_t *dstAddr, uint
  * @param   direction - direction of the command
  * @param   manuCode - manufacturer code for proprietary extensions to a profile
  * @param   seqNum - transaction sequence number
+ * @param   cnfCB - send confirm callback
+ * @param   cnfParam - parameters of send confirm callback
+ * @param   optMsk - force options setting
  *
  * @return  ZSuccess if OK
  */
-ZStatus_t zcl_SendDiscoverAttrsCmd( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t clusterID,
-                                    zclDiscoverAttrsCmd_t *pDiscoverCmd, uint8_t direction,
-                                    uint8_t disableDefaultRsp, uint16_t manuCode, uint8_t seqNum )
+ZStatus_t zcl_SendDiscoverAttrsCmdWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t clusterID,
+                                              zclDiscoverAttrsCmd_t *pDiscoverCmd, uint8_t direction,
+                                              uint8_t disableDefaultRsp, uint16_t manuCode, uint8_t seqNum,
+                                              pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk )
 {
   uint8_t dataLen = 2 + 1; // Start Attribute ID and Max Attribute IDs
   uint8_t *buf;
@@ -2269,9 +2240,10 @@ ZStatus_t zcl_SendDiscoverAttrsCmd( uint8_t srcEP, afAddrType_t *dstAddr, uint16
     *pBuf++ = LO_UINT16(pDiscoverCmd->startAttr);
     *pBuf++ = HI_UINT16(pDiscoverCmd->startAttr);
     *pBuf++ = pDiscoverCmd->maxAttrIDs;
-
-    status = zcl_SendCommand( srcEP, dstAddr, clusterID, ZCL_CMD_DISCOVER_ATTRS, FALSE,
-                              direction, disableDefaultRsp, manuCode, seqNum, dataLen, buf );
+    
+    status = zcl_SendCommandWithConfirm( srcEP, dstAddr, clusterID, ZCL_CMD_DISCOVER_ATTRS, FALSE,
+                                        direction, disableDefaultRsp, manuCode, seqNum, dataLen, buf,
+                                        cnfCB, cnfParam, optMsk );
     zcl_mem_free( buf );
   }
   else
@@ -2348,12 +2320,16 @@ ZStatus_t zcl_SendDiscoverAttrsRspCmd( uint8_t srcEP, afAddrType_t *dstAddr, uin
  * @param   direction - direction of the command
  * @param   manuCode - manufacturer code for proprietary extensions to a profile
  * @param   seqNum - transaction sequence number
+ * @param   cnfCB - send confirm callback
+ * @param   cnfParam - parameters of send confirm callback
+ * @param   optMsk - force options setting
  *
  * @return  ZSuccess if OK
  */
-ZStatus_t zcl_SendDiscoverAttrsExt( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t clusterID,
-                                   zclDiscoverAttrsCmd_t *pDiscoverAttrsExt, uint8_t direction,
-                                   uint8_t disableDefaultRsp, uint16_t manuCode, uint8_t seqNum )
+ZStatus_t zcl_SendDiscoverAttrsExtWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t clusterID,
+                                              zclDiscoverAttrsCmd_t *pDiscoverAttrsExt, uint8_t direction,
+                                              uint8_t disableDefaultRsp, uint16_t manuCode, uint8_t seqNum,
+                                              pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk )
 {
   uint8_t buf[3];  // Buffer size equal to Start Attribute ID and Max Attribute IDs
   ZStatus_t status;
@@ -2363,8 +2339,9 @@ ZStatus_t zcl_SendDiscoverAttrsExt( uint8_t srcEP, afAddrType_t *dstAddr, uint16
   buf[1] = HI_UINT16(pDiscoverAttrsExt->startAttr);
   buf[2] = pDiscoverAttrsExt->maxAttrIDs;
 
-  status = zcl_SendCommand( srcEP, dstAddr, clusterID, ZCL_CMD_DISCOVER_ATTRS_EXT, FALSE,
-                            direction, disableDefaultRsp, manuCode, seqNum, sizeof( buf ), buf );
+  status = zcl_SendCommandWithConfirm( srcEP, dstAddr, clusterID, ZCL_CMD_DISCOVER_ATTRS_EXT, FALSE,
+                                      direction, disableDefaultRsp, manuCode, seqNum, sizeof( buf ), buf,
+                                      cnfCB, cnfParam, optMsk );
 
   return ( status );
 }

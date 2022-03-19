@@ -1232,6 +1232,8 @@ extern uint8_t zcl_radius;
  */
 #define zcl_SendWrite(a,b,c,d,e,f,g,h) (zcl_SendWriteRequest( (a), (b), (c), (d), ZCL_CMD_WRITE, (e), (f), (g), (h) ))
 
+#define zcl_SendWriteWithConfirm(a,b,c,d,e,f,g,h,i,j,k) (zcl_SendWriteRequestWithConfirm( (a), (b), (c), (d), ZCL_CMD_WRITE, (e), (f), (g), (h), (i), (j), (k) ))
+
 /*
  *  @brief Send a Write Undivided Command - ZCL_CMD_WRITE_UNDIVIDED
  *  Use like:
@@ -1239,12 +1241,16 @@ extern uint8_t zcl_radius;
  */
 #define zcl_SendWriteUndivided(a,b,c,d,e,f,g,h) (zcl_SendWriteRequest( (a), (b), (c), (d), ZCL_CMD_WRITE_UNDIVIDED, (e), (f), (g), (h) ))
 
+#define zcl_SendWriteUndividedWithConfirm(a,b,c,d,e,f,g,h,i,j,k) (zcl_SendWriteRequestWithConfirm( (a), (b), (c), (d), ZCL_CMD_WRITE_UNDIVIDED, (e), (f), (g), (h), (i), (j), (k) ))
+
 /*
  *  @brief Send a Write No Response Command - ZCL_CMD_WRITE_NO_RSP
  *  Use like:
  *      ZStatus_t zcl_SendWriteNoRsp( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t realClusterID, zclWriteCmd_t *writeCmd, uint8_t direction, uint8_t disableDefaultRsp, uint16_t manuCode, uint8_t seqNum );
  */
 #define zcl_SendWriteNoRsp(a,b,c,d,e,f,g,h) (zcl_SendWriteRequest( (a), (b), (c), (d), ZCL_CMD_WRITE_NO_RSP, (e), (f), (g), (h) ))
+
+#define zcl_SendWriteNoRspWithConfirm(a,b,c,d,e,f,g,h,i,j,k) (zcl_SendWriteRequestWithConfirm( (a), (b), (c), (d), ZCL_CMD_WRITE_NO_RSP, (e), (f), (g), (h), (i), (j), (k) ))
 #endif // ZCL_WRITE
 
 /*
@@ -1255,7 +1261,9 @@ extern uint8_t zcl_radius;
  *                                uint8_t disableDefaultRsp, uint16_t manuCode, uint8_t seqNum,
  *                                uint16_t cmdFormatLen, uint8_t *cmdFormat );
  */
-#define zcl_SendCommand(a,b,c,d,e,f,g,h,i,j,k)        (zcl_SendCommandEx(a,b,c,d,e,f,g,h,i,j,k,TRUE))
+#define zcl_SendCommand(a,b,c,d,e,f,g,h,i,j,k)        (zcl_SendCommandExWithConfirm(a,b,c,d,e,f,g,h,i,j,k,TRUE,NULL,NULL,0))
+
+#define zcl_SendCommandWithConfirm(a,b,c,d,e,f,g,h,i,j,k,l,m,n)        (zcl_SendCommandExWithConfirm(a,b,c,d,e,f,g,h,i,j,k,TRUE,l,m,n))
 
 /*
  *  @brief Send a ZCL Command from Stack thread
@@ -1265,7 +1273,9 @@ extern uint8_t zcl_radius;
  *                                uint8_t disableDefaultRsp, uint16_t manuCode, uint8_t seqNum,
  *                                uint16_t cmdFormatLen, uint8_t *cmdFormat );
  */
-#define zcl_StackSendCommand(a,b,c,d,e,f,g,h,i,j,k)   (zcl_SendCommandEx(a,b,c,d,e,f,g,h,i,j,k,FALSE))
+#define zcl_StackSendCommand(a,b,c,d,e,f,g,h,i,j,k)   (zcl_SendCommandExWithConfirm(a,b,c,d,e,f,g,h,i,j,k,FALSE,NULL,NULL,0))
+
+#define zcl_StackSendCommandWithConfirm(a,b,c,d,e,f,g,h,i,j,k,l,m,n)   (zcl_SendCommandExWithConfirm(a,b,c,d,e,f,g,h,i,j,k,FALSE,l,m,n))
 
 #ifdef ZCL_REPORTING_DEVICE
 
@@ -1319,6 +1329,8 @@ extern uint8_t zcl_radius;
  */
 #define zcl_SendReportCmd(a,b,c,d,e,f,g,h)       (zcl_SendReportCmdEx(a,b,c,d,e,f,g,h,TRUE))
 
+#define zcl_SendReportCmdWithConfirm(a,b,c,d,e,f,g,h,i,j,k)       (zcl_SendReportCmdExWithConfirm(a,b,c,d,e,f,g,h,TRUE,i,j,k))
+
 /*
  *  @brief Send a ZCL Report from Stack thread
  *  Use like:
@@ -1328,6 +1340,8 @@ extern uint8_t zcl_radius;
  *                                uint16_t cmdFormatLen, uint8_t *cmdFormat );
  */
 #define zcl_StackSendReportCmd(a,b,c,d,e,f,g,h)  (zcl_SendReportCmdEx(a,b,c,d,e,f,g,h,FALSE))
+
+#define zcl_StackSendReportCmdWithConfirm(a,b,c,d,e,f,g,h,i,j,k)  (zcl_SendReportCmdExWithConfirm(a,b,c,d,e,f,g,h,FALSE,i,j,k))
 
 #endif
 
@@ -1586,14 +1600,12 @@ extern zclProcMsgStatus_t zcl_ProcessMessageMSG( afIncomingMSGPacket_t *pkt );
  *
  * @return  ZSuccess if OK
  */
-extern ZStatus_t zcl_SendCommandEx( uint8_t srcEP, afAddrType_t *dstAddr,
-                                  uint16_t clusterID, uint8_t cmd, uint8_t specific, uint8_t direction,
-                                  uint8_t disableDefaultRsp, uint16_t manuCode, uint8_t seqNum,
-                                  uint16_t cmdFormatLen, uint8_t *cmdFormat, uint8_t isReqFromApp  );
+extern ZStatus_t zcl_SendCommandExWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t clusterID, uint8_t cmd,
+                                               uint8_t specific, uint8_t direction, uint8_t disableDefaultRsp, uint16_t manuCode,
+                                               uint8_t seqNum, uint16_t cmdFormatLen, uint8_t *cmdFormat, uint8_t isReqFromApp,
+                                               pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk );
 
-extern uint8_t zcl_SetSendExtParam( pfnAfCnfCB cnfCB, void* cnfParam, uint8_t options );
-
-extern void zcl_ClearSendExtParam( void );
+#define zcl_SendCommandEx(a,b,c,d,e,f,g,h,i,j,k,l)    (zcl_SendCommandExWithConfirm (a,b,c,d,e,f,g,h,i,j,k,l,NULL,NULL,0))
 
 #ifdef ZCL_READ
 /*!
@@ -1609,9 +1621,11 @@ extern void zcl_ClearSendExtParam( void );
  *
  * @return  ZSuccess if OK
  */
-extern ZStatus_t zcl_SendRead( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t realClusterID,
-                               zclReadCmd_t *readCmd, uint8_t direction,
-                               uint8_t disableDefaultRsp, uint16_t manuCode, uint8_t seqNum );
+extern ZStatus_t zcl_SendReadWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t realClusterID, zclReadCmd_t *readCmd,
+                                          uint8_t direction, uint8_t disableDefaultRsp, uint16_t manuCode, uint8_t seqNum,
+                                          pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk );
+
+#define zcl_SendRead(a,b,c,d,e,f,g,h)    (zcl_SendReadWithConfirm(a,b,c,d,e,f,g,h,NULL,NULL,0))
 
 /*!
  *
@@ -1652,9 +1666,12 @@ extern ZStatus_t zcl_ReadAttrDataEx( uint8_t endpoint, uint16_t clusterId, uint1
 /*
  *  Function for Writing an Attribute
  */
-extern ZStatus_t zcl_SendWriteRequest( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t clusterID,
-                                       zclWriteCmd_t *writeCmd, uint8_t cmd, uint8_t direction,
-                                       uint8_t disableDefaultRsp, uint16_t manuCode, uint8_t seqNum );
+extern ZStatus_t zcl_SendWriteRequestWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t clusterID,
+                                                 zclWriteCmd_t *writeCmd, uint8_t cmd, uint8_t direction,
+                                                 uint8_t disableDefaultRsp, uint16_t manuCode, uint8_t seqNum,
+                                                 pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk );
+
+#define zcl_SendWriteRequest(a,b,c,d,e,f,g,h,i)  (zcl_SendWriteRequestWithConfirm(a,b,c,d,e,f,g,h,i,NULL,NULL,NULL))
 
 /*!
  *
@@ -1688,9 +1705,12 @@ extern ZStatus_t zcl_SendWriteRsp( uint8_t srcEP, afAddrType_t *dstAddr, uint16_
  *
  * @return  ZSuccess if OK
  */
-extern ZStatus_t zcl_SendConfigReportCmd( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t realClusterID,
-                                         zclCfgReportCmd_t *cfgReportCmd, uint8_t direction,
-                                         uint8_t disableDefaultRsp, uint16_t manuCode, uint8_t seqNum );
+extern ZStatus_t zcl_SendConfigReportCmdWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t realClusterID,
+                                                    zclCfgReportCmd_t *cfgReportCmd, uint8_t direction,
+                                                    uint8_t disableDefaultRsp, uint16_t manuCode, uint8_t seqNum,
+                                                    pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk );
+
+#define zcl_SendConfigReportCmd(a,b,c,d,e,f,g,h)   (zcl_SendConfigReportCmdWithConfirm(a,b,c,d,e,f,g,h,NULL,NULL,0))
 
 #endif
 
@@ -1729,9 +1749,13 @@ extern ZStatus_t zcl_SendConfigReportRspCmdEx( uint8_t srcEP, afAddrType_t *dstA
  *
  * @return  ZSuccess if OK
  */
-extern ZStatus_t zcl_SendReadReportCfgCmd( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t realClusterID,
-                                          zclReadReportCfgCmd_t *readReportCfgCmd, uint8_t direction,
-                                          uint8_t disableDefaultRsp, uint16_t manuCode, uint8_t seqNum );
+extern ZStatus_t zcl_SendReadReportCfgCmdWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t realClusterID,
+                                                     zclReadReportCfgCmd_t *readReportCfgCmd, uint8_t direction,
+                                                     uint8_t disableDefaultRsp, uint16_t manuCode, uint8_t seqNum,
+                                                     pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk );
+
+#define zcl_SendReadReportCfgCmd(a,b,c,d,e,f,g,h)   (zcl_SendReadReportCfgCmdWithConfirm(a,b,c,d,e,f,g,h,NULL,NULL,0))
+
 #endif
 
 #ifdef ZCL_REPORTING_DEVICE
@@ -1768,9 +1792,13 @@ extern ZStatus_t zcl_SendReadReportCfgRspCmdEx( uint8_t srcEP, afAddrType_t *dst
  *
  * @return  ZSuccess if OK
  */
-extern ZStatus_t zcl_SendReportCmdEx( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t realClusterID,
-                                     zclReportCmd_t *reportCmd, uint8_t direction, uint8_t disableDefaultRsp,
-                                     uint16_t manuCode, uint8_t seqNum, uint8_t isReqFromApp );
+extern ZStatus_t zcl_SendReportCmdExWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t realClusterID,
+                                                zclReportCmd_t *reportCmd, uint8_t direction, uint8_t disableDefaultRsp,
+                                                uint16_t manuCode, uint8_t seqNum, uint8_t isReqFromApp,
+                                                pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk );
+
+#define zcl_SendReportCmdEx(a,b,c,d,e,f,g,h,i)   (zcl_SendReportCmdExWithConfirm(a,b,c,d,e,f,g,h,i,NULL,NULL,0))
+
 #endif
 
 /*!
@@ -1809,9 +1837,12 @@ extern ZStatus_t zcl_SendDefaultRspCmd( uint8_t srcEP, afAddrType_t *dstAddr, ui
  *
  * @return  ZSuccess if OK
  */
-extern ZStatus_t zcl_SendDiscoverCmdsCmd( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t clusterID,
-                                         uint8_t cmdType, zclDiscoverCmdsCmd_t *pDiscoverCmd,
-                                         uint8_t direction, uint8_t disableDefaultRsp, uint16_t manuCode, uint8_t seqNum );
+extern ZStatus_t zcl_SendDiscoverCmdsCmdWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t clusterID,
+                                                    uint8_t cmdType, zclDiscoverCmdsCmd_t *pDiscoverCmd,
+                                                    uint8_t direction, uint8_t disableDefaultRsp, uint16_t manuCode, uint8_t seqNum,
+                                                    pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk );
+
+#define zcl_SendDiscoverCmdsCmd(a,b,c,d,e,f,g,h,i)    (zcl_SendDiscoverCmdsCmdWithConfirm(a,b,c,d,e,f,g,h,i,NULL,NULL,0))
 
 /*!
  *
@@ -1843,9 +1874,12 @@ extern ZStatus_t zcl_SendDiscoverCmdsRspCmd( uint8_t srcEP, afAddrType_t *dstAdd
  *
  * @return  ZSuccess if OK
  */
-extern ZStatus_t zcl_SendDiscoverAttrsCmd( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t realClusterID,
-                                          zclDiscoverAttrsCmd_t *pDiscoverCmd, uint8_t direction,
-                                          uint8_t disableDefaultRsp, uint16_t manuCode, uint8_t seqNum );
+extern ZStatus_t zcl_SendDiscoverAttrsCmdWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t realClusterID,
+                                                     zclDiscoverAttrsCmd_t *pDiscoverCmd, uint8_t direction,
+                                                     uint8_t disableDefaultRsp, uint16_t manuCode, uint8_t seqNum,
+                                                     pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk );
+
+#define zcl_SendDiscoverAttrsCmd(a,b,c,d,e,f,g,h)   (zcl_SendDiscoverAttrsCmdWithConfirm(a,b,c,d,e,f,g,h,NULL,NULL,0))
 
 /*!
  *
@@ -1879,9 +1913,12 @@ extern ZStatus_t zcl_SendDiscoverAttrsRspCmd( uint8_t srcEP, afAddrType_t *dstAd
  *
  * @return  ZSuccess if OK
  */
-extern ZStatus_t zcl_SendDiscoverAttrsExt( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t realClusterID,
-                                          zclDiscoverAttrsCmd_t *pDiscoverAttrsExt, uint8_t direction,
-                                          uint8_t disableDefaultRsp, uint16_t manuCode, uint8_t seqNum );
+extern ZStatus_t zcl_SendDiscoverAttrsExtWithConfirm( uint8_t srcEP, afAddrType_t *dstAddr, uint16_t realClusterID,
+                                                     zclDiscoverAttrsCmd_t *pDiscoverAttrsExt, uint8_t direction,
+                                                     uint8_t disableDefaultRsp, uint16_t manuCode, uint8_t seqNum,
+                                                     pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk );
+
+#define zcl_SendDiscoverAttrsExt(a,b,c,d,e,f,g,h)    (zcl_SendDiscoverAttrsExtWithConfirm(a,b,c,d,e,f,g,h,NULL,NULL,0))
 
 /*!
  *

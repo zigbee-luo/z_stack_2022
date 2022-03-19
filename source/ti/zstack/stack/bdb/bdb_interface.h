@@ -249,7 +249,7 @@ extern "C"
 
 //Define the DISABLE_DEFAULT_RSP flag for reporting attributes
 #ifndef BDB_REPORTING_DISABLE_DEFAULT_RSP
-#define BDB_REPORTING_DISABLE_DEFAULT_RSP  FALSE
+#define BDB_REPORTING_DISABLE_DEFAULT_RSP  TRUE  // disable default response and enable APS-Ack, luoyiming 2022-03-19
 #endif
 
 #endif
