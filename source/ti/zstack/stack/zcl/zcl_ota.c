@@ -141,7 +141,7 @@ uint8_t oadPdState = 0;
  * LOCAL VARIABLES
  */
 
-zclOTA_SetSendConfirmParam_t *zclOTA_SetSendConfirmParam = NULL;
+static zclOTA_SetSendConfirmParam_t *zclOTA_SetSendConfirmParam = NULL;
 
 // Sequence number
 #if (defined OTA_CLIENT_STANDALONE) || (defined OTA_CLIENT_INTEGRATED) || (defined OTA_SERVER)
@@ -251,11 +251,11 @@ void zclOTA_ProcessUnhandledFoundationZCLMsgs ( zclIncomingMsg_t *pMsg )
 /******************************************************************************
  * @fn      zclOTA_SendCommand
  *
- * @brief   send command in ota service and trigger ota send confirm
+ * @brief   send command and trigger ota's send-confirm
  *
  * @param   same with zcl_SendCommand
  *
- * @return  ZStatus_t
+ * @return  same with zcl_SendCommand
  */
 ZStatus_t zclOTA_SendCommand( uint8_t srcEP, afAddrType_t *dstAddr,
                              uint16_t clusterID, uint8_t cmd, uint8_t specific, uint8_t direction,

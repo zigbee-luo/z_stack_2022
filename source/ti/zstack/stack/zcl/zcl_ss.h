@@ -869,7 +869,7 @@ typedef struct
  *  Use like:
  *      zclSS_IAS_Send_ZoneStatusInitNormalOperationModeCmd( uint16_t srcEP, afAddrType_t *dstAddr, uint8_t disableDefaultRsp, uint8_t seqNum );
  */
-#define zclSS_IAS_Send_ZoneStatusInitNormalOperationModeCmd(a,b,c,d) zcl_SendCommand( (a), (b), ZCL_CLUSTER_ID_SS_IAS_ZONE,\
+#define zclSS_IAS_Send_ZoneStatusInitNormalOperationModeCmd(a,b,c,d) zclSS_SendCommand( (a), (b), ZCL_CLUSTER_ID_SS_IAS_ZONE,\
                                                                           COMMAND_IAS_ZONE_INITIATE_NORMAL_OPERATION_MODE, TRUE,\
                                                                           ZCL_FRAME_CLIENT_SERVER_DIR, (c), 0, (d),  0, NULL )
 /** @} End ZCL_ZONE_COMMANDS */
@@ -886,7 +886,7 @@ typedef struct
  *  Use like:
  *      ZStatus_t zclSS_Send_IAS_ACE_EmergencyCmd( uint16_t srcEP, afAddrType_t *dstAddr, uint8_t disableDefaultRsp, uint8_t seqNum );
  */
-#define zclSS_Send_IAS_ACE_EmergencyCmd(a,b,c,d) zcl_SendCommand( (a), (b), ZCL_CLUSTER_ID_SS_IAS_ACE,\
+#define zclSS_Send_IAS_ACE_EmergencyCmd(a,b,c,d) zclSS_SendCommand( (a), (b), ZCL_CLUSTER_ID_SS_IAS_ACE,\
                                                       COMMAND_IASACE_EMERGENCY, TRUE,\
                                                       ZCL_FRAME_CLIENT_SERVER_DIR, (c), 0, (d), 0, NULL )
 
@@ -895,7 +895,7 @@ typedef struct
  *  Use like:
  *      ZStatus_t zclSS_Send_IAS_ACE_FireCmd( uint16_t srcEP, afAddrType_t *dstAddr, uint8_t disableDefaultRsp, uint8_t seqNum );
  */
-#define zclSS_Send_IAS_ACE_FireCmd(a,b,c,d) zcl_SendCommand( (a), (b), ZCL_CLUSTER_ID_SS_IAS_ACE,\
+#define zclSS_Send_IAS_ACE_FireCmd(a,b,c,d) zclSS_SendCommand( (a), (b), ZCL_CLUSTER_ID_SS_IAS_ACE,\
                                                       COMMAND_IASACE_FIRE, TRUE,\
                                                       ZCL_FRAME_CLIENT_SERVER_DIR, (c), 0, (d), 0, NULL )
 
@@ -904,7 +904,7 @@ typedef struct
  *  Use like:
  *      ZStatus_t zclSS_Send_IAS_ACE_PanicCmd( uint16_t srcEP, afAddrType_t *dstAddr, uint8_t disableDefaultRsp, uint8_t seqNum );
  */
-#define zclSS_Send_IAS_ACE_PanicCmd(a,b,c,d) zcl_SendCommand( (a), (b), ZCL_CLUSTER_ID_SS_IAS_ACE,\
+#define zclSS_Send_IAS_ACE_PanicCmd(a,b,c,d) zclSS_SendCommand( (a), (b), ZCL_CLUSTER_ID_SS_IAS_ACE,\
                                                       COMMAND_IASACE_PANIC, TRUE,\
                                                       ZCL_FRAME_CLIENT_SERVER_DIR, (c), 0, (d), 0, NULL )
 
@@ -913,7 +913,7 @@ typedef struct
  *  Use like:
  *      ZStatus_t zclSS_Send_IAS_ACE_GetZoneIDMapCmd( uint16_t srcEP, afAddrType_t *dstAddr, uint8_t disableDefaultRsp, uint8_t seqNum );
  */
-#define zclSS_Send_IAS_ACE_GetZoneIDMapCmd(a,b,c,d) zcl_SendCommand( (a), (b), ZCL_CLUSTER_ID_SS_IAS_ACE,\
+#define zclSS_Send_IAS_ACE_GetZoneIDMapCmd(a,b,c,d) zclSS_SendCommand( (a), (b), ZCL_CLUSTER_ID_SS_IAS_ACE,\
                                                       COMMAND_IASACE_GET_ZONE_ID_MAP, TRUE,\
                                                       ZCL_FRAME_CLIENT_SERVER_DIR, (c), 0, (d),  0, NULL )
 
@@ -922,7 +922,7 @@ typedef struct
  *  Use like:
  *      ZStatus_t zclSS_Send_IAS_ACE_GetPanelStatusCmd( uint16_t srcEP, afAddrType_t *dstAddr, uint8_t disableDefaultRsp, uint8_t seqNum );
  */
-#define zclSS_Send_IAS_ACE_GetPanelStatusCmd(a,b,c,d) zcl_SendCommand( (a), (b), ZCL_CLUSTER_ID_SS_IAS_ACE,\
+#define zclSS_Send_IAS_ACE_GetPanelStatusCmd(a,b,c,d) zclSS_SendCommand( (a), (b), ZCL_CLUSTER_ID_SS_IAS_ACE,\
                                                       COMMAND_IASACE_GET_PANEL_STATUS, TRUE,\
                                                       ZCL_FRAME_CLIENT_SERVER_DIR, (c), 0, (d),  0, NULL )
 
@@ -931,7 +931,7 @@ typedef struct
  *  Use like:
  *      ZStatus_t zclSS_Send_IAS_ACE_GetBypassedZoneListCmd( uint16_t srcEP, afAddrType_t *dstAddr, uint8_t disableDefaultRsp, uint8_t seqNum );
  */
-#define zclSS_Send_IAS_ACE_GetBypassedZoneListCmd(a,b,c,d) zcl_SendCommand( (a), (b), ZCL_CLUSTER_ID_SS_IAS_ACE,\
+#define zclSS_Send_IAS_ACE_GetBypassedZoneListCmd(a,b,c,d) zclSS_SendCommand( (a), (b), ZCL_CLUSTER_ID_SS_IAS_ACE,\
                                                       COMMAND_IASACE_GET_BYPASSED_ZONE_LIST, TRUE,\
                                                       ZCL_FRAME_CLIENT_SERVER_DIR, (c), 0, (d),  0, NULL )
 #endif // ZCL_ACE
@@ -945,6 +945,24 @@ typedef struct
  * FUNCTIONS
  */
 
+/*!
+ * @param   same with zclSS_SendCommand
+ *
+ * @return  same with zclSS_SendCommand
+ */
+extern ZStatus_t zclSS_SendCommand( uint8_t srcEP, afAddrType_t *dstAddr,
+                                   uint16_t clusterID, uint8_t cmd, uint8_t specific, uint8_t direction,
+                                   uint8_t disableDefaultRsp, uint16_t manuCode, uint8_t seqNum,
+                                   uint16_t cmdFormatLen, uint8_t *cmdFormat );
+
+/*!
+ * @param   cnfCB - send confirm callback
+ * @param   cnfParam - parameters of send confirm callback
+ * @param   optMsk - force options setting
+ *
+ * @return  true if setting valid
+ */
+extern bool zclSS_SetSendConfirm( pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk );
 
 /*!
  * @param   endpoint - application's endpoint

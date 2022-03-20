@@ -90,6 +90,13 @@ typedef struct zclSS_ZoneItem
   IAS_ACE_ZoneTable_t     zone;     // Zone info
 } zclSS_ZoneItem_t;
 
+typedef struct
+{
+  pfnAfCnfCB cnfCB;
+  void* cnfParam;
+  uint8_t optMsk;
+}zclSS_SetSendConfirmParam_t;
+
 /*******************************************************************************
  * GLOBAL VARIABLES
  */
@@ -109,6 +116,8 @@ static ZStatus_t (*zclSSUnsupportCallback)(zclIncoming_t* pInMsg) = NULL;
 #if defined(ZCL_ZONE) || defined(ZCL_ACE)
 static zclSS_ZoneItem_t *zclSS_ZoneTable = (zclSS_ZoneItem_t *)NULL;
 #endif // ZCL_ZONE || ZCL_ACE
+
+static zclSS_SetSendConfirmParam_t *zclSS_SetSendConfirmParam = NULL;
 
 /*******************************************************************************
  * LOCAL FUNCTIONS
@@ -250,6 +259,64 @@ void zclSS_RegisterUnsupportCallback( ZStatus_t (*callback)(zclIncoming_t*pInMsg
   zclSSUnsupportCallback = callback;
 }
 
+/*********************************************************************
+ * @fn      zclSS_SendCommand
+ *
+ * @brief   send command and trigger ss's own send-confirm
+ *
+ * @param   callback - pointer to the callback record.
+ *
+ * @return  NONE
+ */
+ZStatus_t zclSS_SendCommand( uint8_t srcEP, afAddrType_t *dstAddr,
+                            uint16_t clusterID, uint8_t cmd, uint8_t specific, uint8_t direction,
+                            uint8_t disableDefaultRsp, uint16_t manuCode, uint8_t seqNum,
+                            uint16_t cmdFormatLen, uint8_t *cmdFormat )
+{
+  pfnAfCnfCB cnfCB = NULL;
+  void* cnfParam = NULL;
+  uint8_t optMsk = 0;
+
+  if ( zclSS_SetSendConfirmParam )
+  {
+    cnfCB = zclSS_SetSendConfirmParam->cnfCB;
+    cnfParam = zclSS_SetSendConfirmParam->cnfParam;
+    optMsk = zclSS_SetSendConfirmParam->optMsk;
+    zcl_mem_free( zclSS_SetSendConfirmParam );
+    zclSS_SetSendConfirmParam = NULL;
+  }
+
+  return zcl_SendCommandWithConfirm( srcEP, dstAddr, clusterID, cmd, specific, direction, disableDefaultRsp,
+                                    manuCode, seqNum, cmdFormatLen, cmdFormat, cnfCB, cnfParam, optMsk );
+}
+
+/******************************************************************************
+ * @fn      zclSS_SetSendConfirm
+ *
+ * @brief   pre-set send confirm in zclSS_SendCommand
+ *
+ * @param   cnfCB - send confirm callback
+ * @param   cnfParam - parameters of send confirm callback
+ * @param   optMsk - force options setting
+ *
+ * @return  true if setting valid
+ */
+bool zclSS_SetSendConfirm( pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk )
+{
+  if(zclSS_SetSendConfirmParam == NULL)
+  {
+    zclSS_SetSendConfirmParam = zcl_mem_alloc(sizeof(zclSS_SetSendConfirmParam_t));
+    if(zclSS_SetSendConfirmParam)
+    {
+      zclSS_SetSendConfirmParam->cnfCB = cnfCB;
+      zclSS_SetSendConfirmParam->cnfParam = cnfParam;
+      zclSS_SetSendConfirmParam->optMsk = optMsk;
+      return true;
+    }
+  }
+  return false;
+}
+
 #ifdef ZCL_ZONE
 /*******************************************************************************
  * @fn      zclSS_Send_IAS_ZoneStatusChangeNotificationCmd
@@ -279,7 +346,7 @@ ZStatus_t zclSS_IAS_Send_ZoneStatusChangeNotificationCmd( uint8_t srcEP, afAddrT
   buf[4] = LO_UINT16( delay );
   buf[5] = HI_UINT16( delay );
 
-  return zcl_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_SS_IAS_ZONE,
+  return zclSS_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_SS_IAS_ZONE,
                           COMMAND_IAS_ZONE_ZONE_STATUS_CHANGE_NOTIFICATION, TRUE,
                           ZCL_FRAME_SERVER_CLIENT_DIR, disableDefaultRsp, 0,
                           seqNum, PAYLOAD_LEN_ZONE_STATUS_CHANGE_NOTIFICATION, buf );
@@ -310,7 +377,7 @@ ZStatus_t zclSS_IAS_Send_ZoneStatusEnrollRequestCmd( uint8_t srcEP, afAddrType_t
   buf[2] = LO_UINT16( manufacturerCode );
   buf[3] = HI_UINT16( manufacturerCode );
 
-  return zcl_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_SS_IAS_ZONE,
+  return zclSS_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_SS_IAS_ZONE,
                           COMMAND_IAS_ZONE_ZONE_ENROLL_REQUEST, TRUE,
                           ZCL_FRAME_SERVER_CLIENT_DIR, disableDefaultRsp, 0,
                           seqNum, PAYLOAD_LEN_ZONE_ENROLL_REQUEST, buf );
@@ -339,7 +406,7 @@ ZStatus_t zclSS_IAS_Send_ZoneStatusEnrollResponseCmd( uint8_t srcEP, afAddrType_
   buf[0] = responseCode;
   buf[1] = zoneID;
 
-  return zcl_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_SS_IAS_ZONE,
+  return zclSS_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_SS_IAS_ZONE,
                           COMMAND_IAS_ZONE_ZONE_ENROLL_RESPONSE, TRUE,
                           ZCL_FRAME_CLIENT_SERVER_DIR, disableDefaultRsp, 0,
                           seqNum, PAYLOAD_LEN_ZONE_STATUS_ENROLL_RSP, buf );
@@ -367,7 +434,7 @@ ZStatus_t zclSS_IAS_Send_ZoneStatusInitTestModeCmd( uint8_t srcEP, afAddrType_t 
   buf[0] = pCmd->testModeDuration;
   buf[1] = pCmd->currZoneSensitivityLevel;
 
-  return zcl_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_SS_IAS_ZONE,
+  return zclSS_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_SS_IAS_ZONE,
                           COMMAND_IAS_ZONE_INITIATE_TEST_MODE, TRUE,
                           ZCL_FRAME_CLIENT_SERVER_DIR, disableDefaultRsp, 0,
                           seqNum, PAYLOAD_LEN_ZONE_STATUS_INIT_TEST_MODE, buf );
@@ -415,7 +482,7 @@ ZStatus_t zclSS_Send_IAS_ACE_ArmCmd( uint8_t srcEP, afAddrType_t *dstAddr,
 
     *pOutBuf++ = pCmd->zoneID;
 
-    stat = zcl_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_SS_IAS_ACE,
+    stat = zclSS_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_SS_IAS_ACE,
                             COMMAND_IASACE_ARM, TRUE,
                             ZCL_FRAME_CLIENT_SERVER_DIR, disableDefaultRsp, 0, seqNum, len, pBuf );
 
@@ -468,7 +535,7 @@ ZStatus_t zclSS_Send_IAS_ACE_BypassCmd( uint8_t srcEP, afAddrType_t *dstAddr,
       pBuf = zcl_memcpy( pBuf, pCmd->armDisarmCode.pStr, pCmd->armDisarmCode.strLen );
     }
 
-    stat = zcl_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_SS_IAS_ACE,
+    stat = zclSS_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_SS_IAS_ACE,
                             COMMAND_IASACE_BYPASS, TRUE,
                             ZCL_FRAME_CLIENT_SERVER_DIR, disableDefaultRsp, 0, seqNum, len, buf );
     zcl_mem_free( buf );
@@ -501,7 +568,7 @@ ZStatus_t zclSS_Send_IAS_ACE_GetZoneInformationCmd( uint8_t srcEP, afAddrType_t 
 
   buf[0] = zoneID;
 
-  return zcl_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_SS_IAS_ACE,
+  return zclSS_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_SS_IAS_ACE,
                           COMMAND_IASACE_GET_ZONE_INFORMATION, TRUE,
                           ZCL_FRAME_CLIENT_SERVER_DIR, disableDefaultRsp, 0, seqNum, 1, buf );
 }
@@ -531,7 +598,7 @@ ZStatus_t zclSS_Send_IAS_ACE_GetZoneStatusCmd( uint8_t srcEP, afAddrType_t *dstA
   buf[3] = LO_UINT16( pCmd->zoneStatusMask );
   buf[4] = HI_UINT16( pCmd->zoneStatusMask );
 
-  return zcl_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_SS_IAS_ACE,
+  return zclSS_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_SS_IAS_ACE,
                           COMMAND_IASACE_GET_ZONE_STATUS, TRUE,
                           ZCL_FRAME_CLIENT_SERVER_DIR, disableDefaultRsp, 0,
                           seqNum, PAYLOAD_LEN_GET_ZONE_STATUS, buf );
@@ -557,7 +624,7 @@ ZStatus_t zclSS_Send_IAS_ACE_ArmResponse( uint8_t srcEP, afAddrType_t *dstAddr,
 
   buf[0] = armNotification;
 
-  return zcl_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_SS_IAS_ACE,
+  return zclSS_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_SS_IAS_ACE,
                           COMMAND_IASACE_ARM_RESPONSE, TRUE,
                           ZCL_FRAME_SERVER_CLIENT_DIR, disableDefaultRsp, 0, seqNum, 1, buf );
 }
@@ -595,7 +662,7 @@ ZStatus_t zclSS_Send_IAS_ACE_GetZoneIDMapResponseCmd( uint8_t srcEP, afAddrType_
       *pIndex++  = HI_UINT16( *zoneIDMap++ );
     }
 
-    stat = zcl_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_SS_IAS_ACE,
+    stat = zclSS_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_SS_IAS_ACE,
                             COMMAND_IASACE_GET_ZONE_ID_MAP_RESPONSE, TRUE,
                             ZCL_FRAME_SERVER_CLIENT_DIR, disableDefaultRsp, 0, seqNum, len, buf );
     zcl_mem_free( buf );
@@ -649,7 +716,7 @@ ZStatus_t zclSS_Send_IAS_ACE_GetZoneInformationResponseCmd( uint8_t srcEP, afAdd
       pBuf = zcl_memcpy( pBuf, pCmd->zoneLabel.pStr, pCmd->zoneLabel.strLen );
     }
 
-    stat = zcl_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_SS_IAS_ACE,
+    stat = zclSS_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_SS_IAS_ACE,
                             COMMAND_IASACE_GET_ZONE_INFORMATION_RESPONSE, TRUE,
                             ZCL_FRAME_SERVER_CLIENT_DIR, disableDefaultRsp, 0, seqNum, len, buf );
     zcl_mem_free( buf );
@@ -704,7 +771,7 @@ ZStatus_t zclSS_Send_IAS_ACE_ZoneStatusChangedCmd( uint8_t srcEP, afAddrType_t *
       pOutBuf = zcl_memcpy( pOutBuf, pCmd->zoneLabel.pStr, pCmd->zoneLabel.strLen );
     }
 
-    stat = zcl_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_SS_IAS_ACE,
+    stat = zclSS_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_SS_IAS_ACE,
                             COMMAND_IASACE_ZONE_STATUS_CHANGED, TRUE,
                             ZCL_FRAME_SERVER_CLIENT_DIR, disableDefaultRsp, 0, seqNum, len, pBuf );
 
@@ -742,7 +809,7 @@ ZStatus_t zclSS_Send_IAS_ACE_PanelStatusChangedCmd( uint8_t srcEP, afAddrType_t 
   buf[2] = pCmd->audibleNotification;
   buf[3] = pCmd->alarmStatus;
 
-  return zcl_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_SS_IAS_ACE,
+  return zclSS_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_SS_IAS_ACE,
                           COMMAND_IASACE_PANEL_STATUS_CHANGED, TRUE,
                           ZCL_FRAME_SERVER_CLIENT_DIR, disableDefaultRsp, 0,
                           seqNum, PAYLOAD_LEN_PANEL_STATUS_CHANGED, buf );
@@ -772,7 +839,7 @@ ZStatus_t zclSS_Send_IAS_ACE_GetPanelStatusResponseCmd( uint8_t srcEP, afAddrTyp
   buf[2] = pCmd->audibleNotification;
   buf[3] = pCmd->alarmStatus;
 
-  return zcl_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_SS_IAS_ACE,
+  return zclSS_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_SS_IAS_ACE,
                           COMMAND_IASACE_GET_PANEL_STATUS_RESPONSE, TRUE,
                           ZCL_FRAME_SERVER_CLIENT_DIR, disableDefaultRsp, 0,
                           seqNum, PAYLOAD_LEN_GET_PANEL_STATUS_RESPONSE, buf );
@@ -808,7 +875,7 @@ ZStatus_t zclSS_Send_IAS_ACE_SetBypassedZoneListCmd( uint8_t srcEP, afAddrType_t
     *pBuf++ = pCmd->numberOfZones;
     zcl_memcpy( pBuf, pCmd->zoneID, pCmd->numberOfZones );
 
-    stat = zcl_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_SS_IAS_ACE,
+    stat = zclSS_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_SS_IAS_ACE,
                             COMMAND_IASACE_SET_BYPASSED_ZONE_LIST, TRUE,
                             ZCL_FRAME_SERVER_CLIENT_DIR, disableDefaultRsp, 0, seqNum, len, buf );
     zcl_mem_free( buf );
@@ -851,7 +918,7 @@ ZStatus_t zclSS_Send_IAS_ACE_BypassResponseCmd( uint8_t srcEP, afAddrType_t *dst
     *pBuf++ = pCmd->numberOfZones;
     zcl_memcpy( pBuf, pCmd->bypassResult, pCmd->numberOfZones );
 
-    stat = zcl_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_SS_IAS_ACE,
+    stat = zclSS_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_SS_IAS_ACE,
                             COMMAND_IASACE_BYPASS_RESPONSE, TRUE,
                             ZCL_FRAME_SERVER_CLIENT_DIR, disableDefaultRsp, 0, seqNum, len, buf );
     zcl_mem_free( buf );
@@ -897,7 +964,7 @@ ZStatus_t zclSS_Send_IAS_ACE_GetZoneStatusResponseCmd( uint8_t srcEP, afAddrType
     *pBuf++ = pCmd->numberOfZones;
     zcl_memcpy( pBuf, pCmd->zoneInfo, pCmd->numberOfZones * sizeof( zclACEZoneStatus_t ) );
 
-    stat = zcl_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_SS_IAS_ACE,
+    stat = zclSS_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_SS_IAS_ACE,
                             COMMAND_IASACE_GET_ZONE_STATUS_RESPONSE, TRUE,
                             ZCL_FRAME_SERVER_CLIENT_DIR, disableDefaultRsp, 0, seqNum, len, buf );
     zcl_mem_free( buf );
@@ -938,7 +1005,7 @@ ZStatus_t zclSS_Send_IAS_WD_StartWarningCmd( uint8_t srcEP, afAddrType_t *dstAdd
   buf[3] = pWarning->strobeDutyCycle;
   buf[4] = pWarning->strobeLevel;
 
-  stat = zcl_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_SS_IAS_WD,
+  stat = zclSS_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_SS_IAS_WD,
                           COMMAND_IASWD_START_WARNING, TRUE,
                           ZCL_FRAME_CLIENT_SERVER_DIR, disableDefaultRsp, 0, seqNum, 5, buf );
 
@@ -965,7 +1032,7 @@ ZStatus_t zclSS_Send_IAS_WD_SquawkCmd( uint8_t srcEP, afAddrType_t *dstAddr,
   uint8_t buf[1];
   buf[0] = squawk->squawkbyte;
 
-  return zcl_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_SS_IAS_WD,
+  return zclSS_SendCommand( srcEP, dstAddr, ZCL_CLUSTER_ID_SS_IAS_WD,
                           COMMAND_IASWD_SQUAWK, TRUE,
                           ZCL_FRAME_CLIENT_SERVER_DIR, disableDefaultRsp, 0, seqNum, 1, buf);
 }

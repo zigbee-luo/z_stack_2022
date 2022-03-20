@@ -529,7 +529,7 @@ typedef struct
  *  Use like:
  *      ZStatus_t zclLighting_ColorControl_Send_StopMoveStepCmd( uint16_t srcEP, afAddrType_t *dstAddr, uint8_t disableDefaultRsp, uint8_t seqNum );
  */
-#define zclLighting_ColorControl_Send_StopMoveStepCmd(a,b,c,d) zcl_SendCommand( (a), (b), ZCL_CLUSTER_ID_LIGHTING_COLOR_CONTROL, COMMAND_COLOR_CONTROL_STOP_MOVE_STEP, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR, (c), 0, (d), 0, NULL )
+#define zclLighting_ColorControl_Send_StopMoveStepCmd(a,b,c,d) zclLighting_SendCommand( (a), (b), ZCL_CLUSTER_ID_LIGHTING_COLOR_CONTROL, COMMAND_COLOR_CONTROL_STOP_MOVE_STEP, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR, (c), 0, (d), 0, NULL )
 #endif //ZCL_LIGHT_LINK_ENHANCE
 
 /******************************************************************************
@@ -546,6 +546,13 @@ typedef struct
 extern ZStatus_t zclLighting_RegisterCmdCallbacks( uint8_t endpoint, zclLighting_AppCallbacks_t *callbacks );
 
 extern void zclLighting_RegisterUnsupportCallback( ZStatus_t (*callback)(zclIncoming_t*pInMsg) );
+
+extern ZStatus_t zclLighting_SendCommand( uint8_t srcEP, afAddrType_t *dstAddr,
+                                   uint16_t clusterID, uint8_t cmd, uint8_t specific, uint8_t direction,
+                                   uint8_t disableDefaultRsp, uint16_t manuCode, uint8_t seqNum,
+                                   uint16_t cmdFormatLen, uint8_t *cmdFormat );
+
+extern bool zclLighting_SetSendConfirm( pfnAfCnfCB cnfCB, void* cnfParam, uint8_t optMsk );
 
 
 /*
