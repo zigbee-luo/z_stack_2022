@@ -452,6 +452,11 @@ extern epList_t *epList;
                                 uint16_t cID, uint16_t len, uint8_t *buf, uint8_t *transID,
                                 uint8_t options, uint8_t radius, pfnAfCnfCB afCnfCB, void* cnfParam );
 
+  /*
+  * afStopConfirmWaitting - stop APS-ack waitting when orphan
+  */
+  extern void afStopConfirmWaitting( void );  
+
 /*********************************************************************
  * @fn      AF_DataRequestSrcRtg
  *

@@ -3121,6 +3121,7 @@ void ZDO_SyncIndicationCB( uint8_t type, uint16_t shortAddr )
       {
         //We lost our parent
         bdb_parentLost();
+        afStopConfirmWaitting();
       }
 #endif
     }

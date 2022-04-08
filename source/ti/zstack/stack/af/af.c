@@ -93,6 +93,9 @@
 /*********************************************************************
  * MACROS
  */
+#ifndef NWK_MAX_DATABUFS_TOTAL
+#define NWK_MAX_DATABUFS_TOTAL      24    // same with nwk_global.c, luoyiming 2022-04-08
+#endif
 
 /*********************************************************************
  * TYPEDEF
@@ -103,9 +106,18 @@ typedef struct
   void* next;
   uint8_t endpoint;
   uint8_t transID;
+  uint16_t clusterID;
+  bool  apsAck;
   void* cnfParam;
   pfnAfCnfCB afCnfCB;
 } afDataCnfList_t;
+
+typedef struct
+{
+  uint8_t  endPoint;
+  uint8_t  transID;
+  uint16_t clusterID;
+} afDataConfirmParam_t;
 
 /*********************************************************************
  * @fn      afSend
@@ -840,8 +852,13 @@ afStatus_t AF_DataRequestExt( afAddrType_t *dstAddr, endPointDesc_t *srcEP,
     //add confirm callback and param into queue, fix by luoyiming 2019-3-11
     cnfItem->endpoint = req.srcEP;
     cnfItem->transID  = req.transID;
+    cnfItem->clusterID = req.clusterID;
     cnfItem->afCnfCB  = afCnfCB;
     cnfItem->cnfParam = cnfParam;
+    if( req.txOptions &  APS_TX_OPTIONS_ACK )
+    {
+      cnfItem->apsAck = true;
+    }
     afAddCnfItem( cnfItem );
   }
 
@@ -918,6 +935,46 @@ afStatus_t AF_DataRequestExt( afAddrType_t *dstAddr, endPointDesc_t *srcEP,
   }
 
   return (afStatus_t)stat;
+}
+
+/**************************************************************************************************
+ * @fn          afStopConfirmWaitting
+ *
+ * @brief       stop confirm waitting when orphan. luoyiming add at 2022-04-08
+ *
+ * input parameters
+ *
+ * @param       none
+ *
+ * None.
+ *
+ * @return      none
+ */
+void afStopConfirmWaitting( void )
+{
+  afDataConfirmParam_t tmpBuf[NWK_MAX_DATABUFS_TOTAL] = {0};
+  uint8_t num = 0;
+  uint8_t n;
+  afDataCnfList_t* find = afDataCnfList;
+
+  // find the aps-ack enabled item, luoyiming 2022-04-08
+  while( find )
+  {
+    if( find->apsAck )
+    {
+      tmpBuf[num].endPoint = find->endpoint;
+      tmpBuf[num].transID = find->transID;
+      tmpBuf[num].clusterID = find->transID;
+      num ++;
+    }
+    find = find->next;
+  }
+
+  // call aps-ack enabled item, luoyiming 2022-04-08
+  for( n = 0; n < num; n++ )
+  {
+    afDataConfirm(tmpBuf[n].endPoint, tmpBuf[n].transID, tmpBuf[n].clusterID, ZNwkNoNetworks);
+  }
 }
 
 /**************************************************************************************************
