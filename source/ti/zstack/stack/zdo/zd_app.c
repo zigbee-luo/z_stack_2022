@@ -3119,9 +3119,10 @@ void ZDO_SyncIndicationCB( uint8_t type, uint16_t shortAddr )
 #if (ZG_BUILD_ENDDEVICE_TYPE)
       else
       {
+        //stop af confrim waitting when lose parent, luoyiming 2022-04-08
+        afStopConfirmWaitting();
         //We lost our parent
         bdb_parentLost();
-        afStopConfirmWaitting();
       }
 #endif
     }
