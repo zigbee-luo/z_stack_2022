@@ -2436,7 +2436,7 @@ typedef struct
  *      ZStatus_t zclGeneral_SendIdentifyQuery( uint8_t srcEP, afAddrType_t *dstAddr, uint8_t disableDefaultRsp, uint8_t seqNum );
  */
 #define zclGeneral_StackSendIdentifyQueryWithConfirm(a,b,c,d,e,f,g) zcl_StackSendCommandWithConfirm( (a), (b), ZCL_CLUSTER_ID_GENERAL_IDENTIFY, COMMAND_IDENTIFY_IDENTIFY_QUERY, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR, (c), 0, (d), 0, NULL, (e), (f), (g) )
-#define zclGeneral_StackSendIdentifyQuery(a,b,c,d) zclGeneral_StackSendIdentifyQueryWithConfirm( (a), (b), (c), (d), NULL, NULL, NULL )
+#define zclGeneral_StackSendIdentifyQuery(a,b,c,d) zclGeneral_StackSendIdentifyQueryWithConfirm( (a), (b), (c), (d), NULL, NULL, 0 )
 #ifdef ZCL_GROUPS
 /*!
  *  Send a Group Add Command from Application Thread
@@ -2673,7 +2673,7 @@ typedef struct
  *      ZStatus_t zclGeneral_SendOnOff_CmdOnWithRecallGlobalScene( uint16_t srcEP, afAddrType_t *dstAddr, uint8_t disableDefaultRsp, uint8_t seqNum );
  */
 #define zclGeneral_SendOnOff_CmdOnWithRecallGlobalSceneWithConfirm(a,b,c,d,e,f,g) zcl_SendCommandWithConfirm( (a), (b), ZCL_CLUSTER_ID_GENERAL_ON_OFF, COMMAND_ON_OFF_ON_WITH_RECALL_GLOBAL_SCENE, TRUE, ZCL_FRAME_CLIENT_SERVER_DIR, (c), 0, (d), 0, NULL, (e), (f), (g) )
-#define zclGeneral_SendOnOff_CmdOnWithRecallGlobalScene(a,b,c,d) zclGeneral_SendOnOff_CmdOnWithRecallGlobalSceneWithConfirm( (a), (b), (c), (d), NULL, NULL, NULL )
+#define zclGeneral_SendOnOff_CmdOnWithRecallGlobalScene(a,b,c,d) zclGeneral_SendOnOff_CmdOnWithRecallGlobalSceneWithConfirm( (a), (b), (c), (d), NULL, NULL, 0 )
 #endif // ZCL_LIGHT_LINK_ENHANCE
 #endif // ZCL_ON_OFF
 
