@@ -4761,15 +4761,16 @@ static void *zclParseInDiscAttrsRspCmd( zclParseCmd_t *pCmd )
   uint8_t numAttr;
 
   // validate that the incoming payload is a valid size
-  // dataLen should be a multiple of sizeof(zclCfgReportStatus_t)
+  // dataLen should be a multiple of sizeof(zclDiscoverAttrInfo_t)
   // first byte of dataLen is discComplete field, exclude this byte
-  if ( (pCmd->dataLen - 1) % sizeof(zclCfgReportStatus_t) != 0 )
+  // ( "zclCfgReportStatus_t" should be fixed to "zclDiscoverAttrInfo_t", luoyiming 2022-04-29 )
+  if ( (pCmd->dataLen - 1) % sizeof(zclDiscoverAttrInfo_t) != 0 )
   {
     return (void *)NULL;
   }
   else
   {
-    numAttr = (pCmd->dataLen - 1) / sizeof(zclCfgReportStatus_t);
+    numAttr = (pCmd->dataLen - 1) / sizeof(zclDiscoverAttrInfo_t);
   }
 
   pDiscoverRspCmd = (zclDiscoverAttrsRspCmd_t *)zcl_mem_alloc( sizeof ( zclDiscoverAttrsRspCmd_t ) +
