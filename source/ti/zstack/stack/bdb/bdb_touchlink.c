@@ -1095,7 +1095,7 @@ static void *touchLink_BeaconIndCB ( void *param )
 
         // check if this device is a better choice to join...
         // ...dont bother checking assocPermit flag is doing a rejoin
-        if ( pBeacon->LQI > gMIN_TREE_LQI )
+        if ( pBeacon->LQI >= gMIN_TREE_LQI )
         {
             uint8_t selected = FALSE;
             uint8_t capacity = FALSE;

@@ -2639,7 +2639,7 @@ void ZDO_beaconNotifyIndCB( NLME_beaconInd_t *pBeacon )
 
     // check if this device is a better choice to join...
     // ...dont bother checking assocPermit flag is doing a rejoin
-    if ( ( pBeacon->LQI > gMIN_TREE_LQI ) &&
+    if ( ( pBeacon->LQI >= gMIN_TREE_LQI ) &&
         ( ( pBeacon->permitJoining == TRUE ) || ( bdb_isDeviceNonFactoryNew() ) ) )
     {
       uint8_t selected = FALSE;
